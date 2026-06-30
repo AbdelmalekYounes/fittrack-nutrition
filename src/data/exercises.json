@@ -1,0 +1,27 @@
+[
+  { "id": "squats", "nom": "Squats", "materiel": ["aucun"], "groupeMusculaire": "Jambes", "instructions": "Pieds largeur épaules, descendre en pliant les genoux comme pour s'asseoir, garder le dos droit, remonter." },
+  { "id": "pompes", "nom": "Pompes", "materiel": ["aucun"], "groupeMusculaire": "Pectoraux / Triceps", "instructions": "Mains au sol largeur épaules, corps gainé, descendre la poitrine vers le sol puis pousser pour remonter." },
+  { "id": "fentes", "nom": "Fentes avant", "materiel": ["aucun"], "groupeMusculaire": "Jambes / Fessiers", "instructions": "Faire un grand pas en avant, descendre le genou arrière vers le sol, revenir et alterner les jambes." },
+  { "id": "gainage", "nom": "Gainage planche", "materiel": ["aucun"], "groupeMusculaire": "Sangle abdominale", "instructions": "Appui sur avant-bras et pointes de pieds, corps aligné de la tête aux talons, contracter les abdominaux." },
+  { "id": "burpees", "nom": "Burpees", "materiel": ["aucun"], "groupeMusculaire": "Cardio / Full body", "instructions": "Accroupi, sauter en planche, faire une pompe, ramener les pieds et sauter verticalement." },
+  { "id": "mountain-climbers", "nom": "Mountain climbers", "materiel": ["aucun"], "groupeMusculaire": "Cardio / Abdominaux", "instructions": "En position de planche, ramener alternativement les genoux vers la poitrine rapidement." },
+  { "id": "crunchs", "nom": "Crunchs", "materiel": ["aucun"], "groupeMusculaire": "Abdominaux", "instructions": "Allongé sur le dos, genoux pliés, remonter les épaules vers les genoux en contractant les abdominaux." },
+  { "id": "dips-chaise", "nom": "Dips sur chaise", "materiel": ["aucun"], "groupeMusculaire": "Triceps", "instructions": "Mains sur le bord d'une chaise, jambes tendues, descendre les fesses vers le sol puis remonter en poussant sur les bras." },
+
+  { "id": "developpe-epaules-halteres", "nom": "Développé épaules haltères", "materiel": ["halteres"], "groupeMusculaire": "Épaules", "instructions": "Debout ou assis, pousser les haltères au-dessus de la tête puis redescendre au niveau des épaules." },
+  { "id": "rowing-haltere", "nom": "Rowing haltère", "materiel": ["halteres"], "groupeMusculaire": "Dos", "instructions": "Buste penché en avant, tirer l'haltère vers la hanche en contractant le dos, redescendre lentement." },
+  { "id": "squat-goblet", "nom": "Squat goblet", "materiel": ["halteres"], "groupeMusculaire": "Jambes", "instructions": "Tenir un haltère contre la poitrine, descendre en squat en gardant le dos droit, remonter." },
+  { "id": "souleve-terre-jambes-tendues", "nom": "Soulevé de terre jambes tendues", "materiel": ["halteres"], "groupeMusculaire": "Ischio-jambiers / Fessiers", "instructions": "Jambes légèrement fléchies, descendre les haltères le long des jambes en gardant le dos plat, remonter en contractant les fessiers." },
+  { "id": "curl-biceps", "nom": "Curl biceps", "materiel": ["halteres"], "groupeMusculaire": "Biceps", "instructions": "Bras le long du corps, fléchir les coudes pour remonter les haltères vers les épaules, redescendre lentement." },
+  { "id": "extensions-triceps", "nom": "Extensions triceps", "materiel": ["halteres"], "groupeMusculaire": "Triceps", "instructions": "Haltère tenu à deux mains au-dessus de la tête, descendre derrière la nuque puis remonter en tendant les bras." },
+
+  { "id": "elastique-tirage", "nom": "Tirage horizontal élastique", "materiel": ["elastiques"], "groupeMusculaire": "Dos", "instructions": "Élastique fixé devant soi, tirer vers la poitrine en serrant les omoplates, revenir lentement." },
+  { "id": "elastique-squat", "nom": "Squat avec élastique", "materiel": ["elastiques"], "groupeMusculaire": "Jambes / Fessiers", "instructions": "Élastique positionné au-dessus des genoux, effectuer un squat en maintenant la tension de l'élastique." },
+
+  { "id": "presse-jambes", "nom": "Presse à cuisses (salle)", "materiel": ["salle_de_sport"], "groupeMusculaire": "Jambes", "instructions": "Assis sur la machine, pousser la plateforme avec les jambes sans verrouiller les genoux en fin de mouvement." },
+  { "id": "tirage-poulie-haute", "nom": "Tirage poulie haute (salle)", "materiel": ["salle_de_sport"], "groupeMusculaire": "Dos", "instructions": "Tirer la barre vers le haut de la poitrine en serrant les omoplates, contrôler la remontée." },
+  { "id": "developpe-couche-banc", "nom": "Développé couché (salle)", "materiel": ["salle_de_sport"], "groupeMusculaire": "Pectoraux", "instructions": "Allongé sur le banc, descendre la barre vers la poitrine puis pousser vers le haut sans verrouiller les coudes." },
+
+  { "id": "velo-stationnaire", "nom": "Vélo stationnaire", "materiel": ["velo"], "groupeMusculaire": "Cardio / Jambes", "instructions": "Pédaler à intensité régulière en gardant le dos droit, ajuster la résistance selon l'objectif." },
+  { "id": "course-tapis", "nom": "Course sur tapis", "materiel": ["tapis_de_course"], "groupeMusculaire": "Cardio / Jambes", "instructions": "Courir à allure modérée en gardant une foulée régulière, ajuster la vitesse et l'inclinaison selon l'objectif." }
+]

@@ -1,0 +1,19 @@
+[
+  { "id": "oeufs", "nom": "Œufs", "caloriesPour100g": 155, "proteinesPour100g": 13, "glucidesPour100g": 1.1, "lipidesPour100g": 11, "fibresPour100g": 0 },
+  { "id": "blanc-de-poulet", "nom": "Blanc de poulet", "caloriesPour100g": 165, "proteinesPour100g": 31, "glucidesPour100g": 0, "lipidesPour100g": 3.6, "fibresPour100g": 0 },
+  { "id": "riz", "nom": "Riz (cuit)", "caloriesPour100g": 130, "proteinesPour100g": 2.7, "glucidesPour100g": 28, "lipidesPour100g": 0.3, "fibresPour100g": 0.4 },
+  { "id": "pates", "nom": "Pâtes (cuites)", "caloriesPour100g": 158, "proteinesPour100g": 5.8, "glucidesPour100g": 31, "lipidesPour100g": 0.9, "fibresPour100g": 1.8 },
+  { "id": "flocons-avoine", "nom": "Flocons d'avoine", "caloriesPour100g": 389, "proteinesPour100g": 16.9, "glucidesPour100g": 66, "lipidesPour100g": 6.9, "fibresPour100g": 10.6 },
+  { "id": "fromage-blanc", "nom": "Fromage blanc 0%", "caloriesPour100g": 47, "proteinesPour100g": 8, "glucidesPour100g": 4, "lipidesPour100g": 0.2, "fibresPour100g": 0 },
+  { "id": "yaourt-grec", "nom": "Yaourt grec", "caloriesPour100g": 97, "proteinesPour100g": 9, "glucidesPour100g": 4, "lipidesPour100g": 5, "fibresPour100g": 0 },
+  { "id": "banane", "nom": "Banane", "caloriesPour100g": 89, "proteinesPour100g": 1.1, "glucidesPour100g": 23, "lipidesPour100g": 0.3, "fibresPour100g": 2.6 },
+  { "id": "pomme", "nom": "Pomme", "caloriesPour100g": 52, "proteinesPour100g": 0.3, "glucidesPour100g": 14, "lipidesPour100g": 0.2, "fibresPour100g": 2.4 },
+  { "id": "thon", "nom": "Thon (au naturel)", "caloriesPour100g": 116, "proteinesPour100g": 26, "glucidesPour100g": 0, "lipidesPour100g": 1, "fibresPour100g": 0 },
+  { "id": "saumon", "nom": "Saumon", "caloriesPour100g": 208, "proteinesPour100g": 20, "glucidesPour100g": 0, "lipidesPour100g": 13, "fibresPour100g": 0 },
+  { "id": "steak-hache-5", "nom": "Steak haché 5%", "caloriesPour100g": 130, "proteinesPour100g": 21, "glucidesPour100g": 0, "lipidesPour100g": 5, "fibresPour100g": 0 },
+  { "id": "lentilles", "nom": "Lentilles (cuites)", "caloriesPour100g": 116, "proteinesPour100g": 9, "glucidesPour100g": 20, "lipidesPour100g": 0.4, "fibresPour100g": 7.9 },
+  { "id": "pois-chiches", "nom": "Pois chiches (cuits)", "caloriesPour100g": 164, "proteinesPour100g": 8.9, "glucidesPour100g": 27, "lipidesPour100g": 2.6, "fibresPour100g": 7.6 },
+  { "id": "avocat", "nom": "Avocat", "caloriesPour100g": 160, "proteinesPour100g": 2, "glucidesPour100g": 8.5, "lipidesPour100g": 14.7, "fibresPour100g": 6.7 },
+  { "id": "amandes", "nom": "Amandes", "caloriesPour100g": 579, "proteinesPour100g": 21.2, "glucidesPour100g": 21.6, "lipidesPour100g": 49.9, "fibresPour100g": 12.5 },
+  { "id": "pain-complet", "nom": "Pain complet", "caloriesPour100g": 247, "proteinesPour100g": 13, "glucidesPour100g": 41, "lipidesPour100g": 3.4, "fibresPour100g": 7 }
+]
