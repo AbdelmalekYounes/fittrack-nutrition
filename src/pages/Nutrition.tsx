@@ -4,6 +4,9 @@ import { useAppData } from '../hooks/useAppData';
 import { useNutritionTargets } from '../hooks/useNutritionTargets';
 import ProgressBar from '../components/ProgressBar';
 import FoodPicker from '../components/FoodPicker';
+import BarcodeScanner from '../components/BarcodeScanner';
+import VoiceMealEntry from '../components/VoiceMealEntry';
+import FreeMealModal from '../components/FreeMealModal';
 import type { FoodItem, MealEntry, TypeRepas } from '../types';
 import { todayISO, addDays } from '../utils/date';
 import { getFoodEmoji } from '../utils/foodIcons';
@@ -25,7 +28,7 @@ function emptyManual() {
 }
 
 export default function Nutrition() {
-  const { profile, meals, setMeals, favorites, toggleFavorite } = useAppData();
+  const { profile, meals, setMeals, favorites, toggleFavorite, customFoods } = useAppData();
   const targets = useNutritionTargets(profile);
 
   const [date, setDate] = useState(todayISO());
@@ -35,6 +38,9 @@ export default function Nutrition() {
   const [quantite, setQuantite] = useState(100);
   const [manual, setManual] = useState(emptyManual());
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [voiceOpen, setVoiceOpen] = useState(false);
+  const [freeMealOpen, setFreeMealOpen] = useState(false);
 
   const dayMeals = useMemo(() => meals.filter((m) => m.date === date), [meals, date]);
 
@@ -70,8 +76,8 @@ export default function Nutrition() {
     setMeals((prev) => [...prev, { ...entry, date, typeRepas, id: crypto.randomUUID() }]);
   }
 
-  function quickAddFood(food: FoodItem) {
-    const qty = lastQuantityFor(food.nom);
+  /** Ajoute un aliment (base locale, favoris ou produit scanné) pour une quantité donnée en grammes. */
+  function addFoodWithQuantity(food: FoodItem, qty: number) {
     const factor = qty / 100;
     quickAddMeal({
       nom: food.nom,
@@ -82,6 +88,10 @@ export default function Nutrition() {
       lipides: Math.round(food.lipidesPour100g * factor * 10) / 10,
       fibres: Math.round(food.fibresPour100g * factor * 10) / 10,
     });
+  }
+
+  function quickAddFood(food: FoodItem) {
+    addFoodWithQuantity(food, lastQuantityFor(food.nom));
   }
 
   function quickAddFromEntry(meal: MealEntry) {
@@ -201,9 +211,12 @@ export default function Nutrition() {
       <div className="page-header">
         <h1>Nutrition</h1>
         <p className="text-muted">Enregistrez vos repas et suivez vos macronutriments.</p>
-        <Link to="/plan-repas" className="btn btn-outline btn-sm" style={{ marginTop: 'var(--space-2)' }}>
-          🗓️ Voir mon plan alimentaire de la semaine
-        </Link>
+        <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', marginTop: 'var(--space-2)' }}>
+          <Link to="/plan-repas" className="btn btn-outline btn-sm">🗓️ Plan alimentaire</Link>
+          <button type="button" className="btn btn-outline btn-sm" onClick={() => setScannerOpen(true)}>📷 Scanner un produit</button>
+          <button type="button" className="btn btn-outline btn-sm" onClick={() => setVoiceOpen(true)}>🎤 Ajouter à la voix</button>
+          <button type="button" className="btn btn-outline btn-sm" onClick={() => setFreeMealOpen(true)}>🍕 Repas restaurant / libre</button>
+        </div>
       </div>
 
       {targets && (
@@ -299,6 +312,7 @@ export default function Nutrition() {
                 onSelect={setSelectedFood}
                 favorites={favorites}
                 onToggleFavorite={toggleFavorite}
+                extraFoods={customFoods}
               />
               {selectedFood && (
                 <div className="form-group" style={{ marginTop: 'var(--space-3)' }}>
@@ -409,6 +423,32 @@ export default function Nutrition() {
 
       {dayMeals.length === 0 && (
         <div className="empty-state card">Aucun repas enregistré pour cette date.</div>
+      )}
+
+      {scannerOpen && (
+        <BarcodeScanner
+          onClose={() => setScannerOpen(false)}
+          onAddFood={(food, qty) => addFoodWithQuantity(food, qty)}
+        />
+      )}
+
+      {voiceOpen && (
+        <VoiceMealEntry
+          onClose={() => setVoiceOpen(false)}
+          onConfirm={(items) => {
+            items.forEach((item) => addFoodWithQuantity(item.food, item.quantiteGrammes));
+            setVoiceOpen(false);
+          }}
+        />
+      )}
+
+      {freeMealOpen && targets && (
+        <FreeMealModal
+          onClose={() => setFreeMealOpen(false)}
+          caloriesRestantes={Math.max(0, targets.calories - totals.calories)}
+          proteinesRestantes={Math.max(0, targets.proteines - totals.proteines)}
+          onConfirm={(entry) => quickAddMeal(entry)}
+        />
       )}
     </div>
   );

@@ -11,6 +11,7 @@ import { generateProgram } from '../utils/program';
 import { recommendRecipeOfDay } from '../utils/recipes';
 import { ACTIVITY_LABELS } from '../utils/activityLabels';
 import { checkProfileSafety } from '../utils/safetyCheck';
+import { calculateRecoveryScore, getRecoveryRecommendation, RECOMMANDATION_LABELS } from '../utils/recoveryScore';
 import recipesData from '../data/recipes.json';
 import type { Recipe } from '../types';
 
@@ -25,7 +26,7 @@ const OBJECTIF_LABELS: Record<string, string> = {
 };
 
 export default function Dashboard() {
-  const { profile, meals, activities, weights, completedSessions, scheduledSessions } = useAppData();
+  const { profile, meals, activities, weights, completedSessions, scheduledSessions, recoveryEntries } = useAppData();
   const targets = useNutritionTargets(profile);
 
   if (!profile) {
@@ -83,6 +84,11 @@ export default function Dashboard() {
     : null;
   const seancesRestantes = Math.max(0, profile.seancesParSemaine - sessionsThisWeek);
   const safetyWarnings = targets ? checkProfileSafety(profile, targets) : [];
+
+  // Adapte la suggestion de séance au score de récupération du jour, si renseigné.
+  const todayRecovery = recoveryEntries.find((r) => r.date === today);
+  const recoveryScore = todayRecovery ? calculateRecoveryScore(todayRecovery) : null;
+  const recoveryRecommendation = todayRecovery ? getRecoveryRecommendation(todayRecovery, recoveryScore!) : null;
 
   return (
     <div>
@@ -181,6 +187,14 @@ export default function Dashboard() {
           ) : (
             <p className="text-muted">Aucun programme généré.</p>
           )}
+          {recoveryRecommendation && (
+            <p className="text-muted" style={{ marginTop: 'var(--space-2)' }}>
+              Récupération du jour ({recoveryScore}/100) : <strong>{RECOMMANDATION_LABELS[recoveryRecommendation]}</strong>
+            </p>
+          )}
+          <Link to="/recuperation" className="btn-icon" style={{ display: 'inline-block', marginTop: 'var(--space-1)', fontSize: 'var(--font-size-sm)' }}>
+            {todayRecovery ? '✏️ Modifier ma récupération' : '➕ Saisir ma récupération du jour'}
+          </Link>
         </Card>
         <Card title="Recette recommandée du jour">
           {recommendedRecipe ? (

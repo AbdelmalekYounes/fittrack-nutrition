@@ -13,6 +13,8 @@ import ExerciseLibrary from './pages/ExerciseLibrary';
 import LiveSession from './pages/LiveSession';
 import MealPlan from './pages/MealPlan';
 import Privacy from './pages/Privacy';
+import SmartAnalysis from './pages/SmartAnalysis';
+import Recovery from './pages/Recovery';
 
 export default function App() {
   return (
@@ -31,6 +33,8 @@ export default function App() {
         <Route path="/seance-en-direct/:seanceId" element={<LiveSession />} />
         <Route path="/plan-repas" element={<MealPlan />} />
         <Route path="/confidentialite" element={<Privacy />} />
+        <Route path="/analyse-intelligente" element={<SmartAnalysis />} />
+        <Route path="/recuperation" element={<Recovery />} />
       </Route>
     </Routes>
   );

@@ -23,9 +23,18 @@ sont stockées en local dans le navigateur via `localStorage` — aucune informa
 - **Paramètres** : export/import JSON complet des données, réinitialisation.
 - **Confidentialité** : explication claire des données stockées et du fonctionnement 100% local.
 
-Les calculs nutritionnels et caloriques (BMR, TDEE, MET, ajustements, alertes...) sont des
-**estimations** basées sur des formules générales et ne remplacent pas un avis médical,
-diététique ou sportif professionnel — l'application le rappelle systématiquement à l'écran.
+### Fonctionnalités intelligentes
+- **Scanner code-barres** (page Nutrition) : recherche d'un produit via [OpenFoodFacts](https://world.openfoodfacts.org/) par code-barres (caméra avec l'API native `BarcodeDetector` si disponible, sinon saisie manuelle toujours possible) — nom, calories, protéines, glucides, lipides, fibres, sel, Nutri-Score, allergènes, ingrédients ; ajout direct au repas et/ou aux favoris. Fallback géré pour produit introuvable, caméra indisponible, API hors service ou données incomplètes.
+- **Ajout de repas par voix** (page Nutrition) : reconnaissance vocale du navigateur (Web Speech API) ou saisie texte équivalente, analyse automatique en aliments + quantités, écran de confirmation/correction avant ajout réel.
+- **Mode restaurant / repas libre** (page Nutrition) : estimation rapide basse/moyenne/haute pour 12 types de repas difficiles à calculer (pizza, burger, kebab, buffet...), avec un conseil bienveillant pour équilibrer la suite de la journée.
+- **Analyse intelligente** (coach anti-stagnation) : analyse des 14 et 30 derniers jours (stagnation du poids, déficit insuffisant/trop agressif, protéines basses, activité insuffisante, manque de régularité, données insuffisantes) avec recommandations toujours bornées à des valeurs sûres.
+- **Récupération** : saisie quotidienne (sommeil, fatigue, courbatures, stress, motivation, faim, douleur), score sur 100 et recommandation de séance (intense/normale/légère/repos), utilisée pour adapter la suggestion du Dashboard.
+- **Progression automatique par exercice** : historique, record personnel, meilleure série, volume total et recommandation (+répétitions, +série, maintien ou réduction) par exercice, alimentée par le mode séance en direct et affichée dans le Programme et la Bibliothèque d'exercices.
+
+Les calculs nutritionnels et caloriques (BMR, TDEE, MET, ajustements, alertes, score de
+récupération...) sont des **estimations** basées sur des formules générales et ne remplacent
+pas un avis médical, diététique ou sportif professionnel — l'application le rappelle
+systématiquement à l'écran.
 
 ## PWA (Progressive Web App)
 
@@ -49,6 +58,12 @@ node scripts/generate-icons.cjs
 - recharts (graphiques)
 - CSS pur (aucune librairie de style)
 - Persistance via `localStorage` uniquement, isolée derrière une couche de services
+- APIs navigateur natives uniquement (Web Speech API pour la voix, `BarcodeDetector` pour le
+  scan de code-barres, `getUserMedia` pour la caméra) : aucune dépendance npm supplémentaire,
+  avec repli (fallback) systématique si l'API n'est pas supportée par le navigateur.
+- [OpenFoodFacts](https://world.openfoodfacts.org/) : seule API externe utilisée (gratuite,
+  sans clé), uniquement pour le scanner de produits ; toutes les autres fonctionnalités
+  restent 100% locales même si cette API est indisponible.
 
 ## Architecture des données (préparée pour une future migration serveur)
 
@@ -63,16 +78,19 @@ asynchrones) — les pages et composants n'auront pas à changer.
 ```
 src/
   components/   Composants UI réutilisables (Sidebar, MobileNav, Card, ProgressBar, Gauge,
-                Modal, FoodPicker, Layout, Onboarding, SafetyWarnings)
+                Modal, FoodPicker, Layout, Onboarding, SafetyWarnings, BarcodeScanner,
+                VoiceMealEntry, FreeMealModal)
   pages/        Pages de l'application (Dashboard, Profile, Nutrition, MealPlan, Recipes,
                 Program, LiveSession, ExerciseLibrary, Activities, Calendar, Progress,
-                Settings, Privacy)
+                Recovery, SmartAnalysis, Settings, Privacy)
   hooks/        Hooks personnalisés (useLocalStorage, useAppData, useNutritionTargets)
-  services/     Couche de persistance isolée (storageService, backupService)
+  services/     Couche de persistance et d'accès externe isolée (storageService,
+                backupService, openFoodFactsService, barcodeService, speechService)
   utils/        Logique métier (calculations, program, cardioPrograms, recipes, mealPlan,
-                weeklyReport, adjustmentEngine, safetyCheck, storage, date, activityLabels,
-                foodIcons, profileOptions)
-  data/         Données statiques (aliments, recettes, exercices)
+                weeklyReport, adjustmentEngine, stagnationCoach, recoveryScore,
+                exerciseProgression, safetyCheck, voiceMealParser, storage, date,
+                activityLabels, foodIcons, profileOptions)
+  data/         Données statiques (aliments, recettes, exercices, estimations repas libres)
   types/        Types TypeScript partagés
   styles/       Feuilles de style CSS (variables, global, layout, components)
 scripts/        Scripts utilitaires (génération des icônes PWA)

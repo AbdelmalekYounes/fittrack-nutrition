@@ -10,7 +10,9 @@ const NAV_ITEMS = [
   { to: '/exercices', label: 'Exercices', icon: '💪' },
   { to: '/activites', label: 'Activités', icon: '🔥' },
   { to: '/calendrier', label: 'Calendrier', icon: '📅' },
+  { to: '/recuperation', label: 'Récupération', icon: '🛌' },
   { to: '/progression', label: 'Progression', icon: '📈' },
+  { to: '/analyse-intelligente', label: 'Analyse intelligente', icon: '🧠' },
   { to: '/parametres', label: 'Paramètres', icon: '⚙️' },
   { to: '/confidentialite', label: 'Confidentialité', icon: '🔒' },
 ];

@@ -1,4 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import {
   LineChart,
   Line,
@@ -137,6 +138,9 @@ export default function Progress() {
       <div className="page-header">
         <h1>Progression</h1>
         <p className="text-muted">Visualisez votre évolution sur la durée.</p>
+        <Link to="/analyse-intelligente" className="btn btn-outline btn-sm" style={{ marginTop: 'var(--space-2)' }}>
+          🧠 Voir l'analyse intelligente (coach anti-stagnation)
+        </Link>
       </div>
 
       <div className="card section">

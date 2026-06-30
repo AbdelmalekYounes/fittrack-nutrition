@@ -6,11 +6,11 @@ import { addDays, todayISO } from './date';
 // calories cibles ne descendent jamais sous le métabolisme de base ni sous un plancher
 // absolu par sexe — "ne jamais proposer de valeur dangereuse".
 const MAX_DAILY_ADJUSTMENT = 300;
-const ABSOLUTE_FLOOR: Record<UserProfile['sexe'], number> = { homme: 1500, femme: 1200 };
+export const ABSOLUTE_FLOOR: Record<UserProfile['sexe'], number> = { homme: 1500, femme: 1200 };
 const KCAL_PER_KG = 7700;
 
 // Rythme de variation de poids jugé raisonnable selon l'objectif (kg/semaine).
-const EXPECTED_RATE: Record<UserProfile['objectif'], number> = {
+export const EXPECTED_RATE: Record<UserProfile['objectif'], number> = {
   perte_de_poids: -0.5,
   recomposition_corporelle: -0.25,
   prise_de_muscle: 0.25,
@@ -18,7 +18,7 @@ const EXPECTED_RATE: Record<UserProfile['objectif'], number> = {
   maintien: 0,
 };
 
-function periodRate(weights: WeightEntry[], from: string, to: string): number | null {
+export function periodRate(weights: WeightEntry[], from: string, to: string): number | null {
   const inRange = [...weights].filter((w) => w.date >= from && w.date <= to).sort((a, b) => a.date.localeCompare(b.date));
   if (inRange.length < 2) return null;
   const first = inRange[0];
@@ -28,7 +28,7 @@ function periodRate(weights: WeightEntry[], from: string, to: string): number | 
   return ((last.poids - first.poids) / days) * 7;
 }
 
-function averageCalories(meals: MealEntry[], from: string, to: string): number {
+export function averageCalories(meals: MealEntry[], from: string, to: string): number {
   const inRange = meals.filter((m) => m.date >= from && m.date <= to);
   const days = new Set(inRange.map((m) => m.date)).size;
   if (days === 0) return 0;

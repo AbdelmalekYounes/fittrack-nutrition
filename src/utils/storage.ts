@@ -20,6 +20,9 @@ export const STORAGE_KEYS = {
   programId: 'fittrack:programId',
   favorites: 'fittrack:favorites',
   mealPlan: 'fittrack:mealPlan',
+  customFoods: 'fittrack:customFoods',
+  recoveryEntries: 'fittrack:recoveryEntries',
+  exerciseLogs: 'fittrack:exerciseLogs',
   initialized: 'fittrack:initialized',
 } as const;
 

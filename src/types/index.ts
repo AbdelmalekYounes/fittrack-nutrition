@@ -66,6 +66,14 @@ export interface FoodItem {
   glucidesPour100g: number;
   lipidesPour100g: number;
   fibresPour100g: number;
+  // Champs optionnels enrichis (produits scannés via OpenFoodFacts ou ajoutés manuellement) :
+  // restent rétrocompatibles avec les aliments de la base locale qui ne les renseignent pas.
+  selPour100g?: number;
+  nutriScore?: string; // 'a' | 'b' | 'c' | 'd' | 'e'
+  allergenes?: string[];
+  ingredientsTexte?: string;
+  source?: 'local' | 'openfoodfacts' | 'personnalise';
+  codeBarres?: string;
 }
 
 export type TypeRepas = 'petit_dejeuner' | 'dejeuner' | 'diner' | 'collation';
@@ -243,4 +251,60 @@ export interface AdjustmentSuggestion {
 export interface SafetyWarning {
   niveau: 'attention' | 'alerte';
   message: string;
+}
+
+/** Saisie quotidienne de récupération (voir utils/recoveryScore.ts). Échelles 1 (faible) à 5 (élevée),
+ * sauf fatigue/courbatures/stress où 5 = niveau élevé de la gêne (donc défavorable au score). */
+export interface RecoveryEntry {
+  id: string;
+  date: string; // ISO yyyy-mm-dd, une saisie par jour
+  heuresSommeil: number;
+  qualiteSommeil: number; // 1-5
+  fatigue: number; // 1-5 (5 = très fatigué)
+  courbatures: number; // 1-5 (5 = très courbaturé)
+  stress: number; // 1-5 (5 = très stressé)
+  motivation: number; // 1-5
+  faim: number; // 1-5
+  douleur?: string;
+}
+
+export type DifficulteRessentie = 'tres_facile' | 'facile' | 'normale' | 'difficile' | 'echec';
+
+/** Une série réalisée pour un exercice donné (voir Mode séance en direct). */
+export interface SerieRealisee {
+  repetitions: number;
+  chargeKg?: number;
+}
+
+/** Historique de performance pour un exercice précis, utilisé pour la progression automatique
+ * (voir utils/exerciseProgression.ts). Alimenté principalement par le mode séance en direct. */
+export interface ExerciseLog {
+  id: string;
+  exerciceId: string;
+  date: string;
+  series: SerieRealisee[];
+  difficulte: DifficulteRessentie;
+  notes?: string;
+}
+
+/** Un point de vigilance ou recommandation détecté par le coach anti-stagnation
+ * (voir utils/stagnationCoach.ts). Recommandations toujours bornées à des valeurs sûres. */
+export interface StagnationIssue {
+  type:
+    | 'stagnation_poids'
+    | 'deficit_insuffisant'
+    | 'deficit_trop_agressif'
+    | 'proteines_basses'
+    | 'activite_insuffisante'
+    | 'regularite_faible'
+    | 'donnees_insuffisantes'
+    | 'objectif_respecte';
+  gravite: 'info' | 'attention' | 'alerte';
+  message: string;
+  recommandation: string;
+}
+
+export interface StagnationReport {
+  analyses14j: StagnationIssue[];
+  analyses30j: StagnationIssue[];
 }

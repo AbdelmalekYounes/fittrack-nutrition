@@ -10,13 +10,16 @@ interface FoodPickerProps {
   selectedId?: string;
   favorites?: string[];
   onToggleFavorite?: (foodId: string) => void;
+  /** Aliments supplémentaires à fusionner avec la base locale (ex. produits scannés via OpenFoodFacts). */
+  extraFoods?: FoodItem[];
 }
 
-export default function FoodPicker({ onSelect, selectedId, favorites = [], onToggleFavorite }: FoodPickerProps) {
+export default function FoodPicker({ onSelect, selectedId, favorites = [], onToggleFavorite, extraFoods = [] }: FoodPickerProps) {
   const [query, setQuery] = useState('');
   const [favorisOnly, setFavorisOnly] = useState(false);
 
-  const filtered = foods
+  const allFoods = [...foods, ...extraFoods];
+  const filtered = allFoods
     .filter((food) => food.nom.toLowerCase().includes(query.toLowerCase()))
     .filter((food) => !favorisOnly || favorites.includes(food.id))
     // Les favoris remontent en tête de liste pour un accès plus rapide.

@@ -5,6 +5,7 @@ import { generateProgram, getExerciseName } from '../utils/program';
 import { getCardioPrograms } from '../utils/cardioPrograms';
 import { ACTIVITY_LABELS } from '../utils/activityLabels';
 import { todayISO } from '../utils/date';
+import { getExerciseHistory, suggestNextProgression } from '../utils/exerciseProgression';
 import Modal from '../components/Modal';
 import recipesData from '../data/recipes.json';
 import type { Recipe } from '../types';
@@ -12,7 +13,7 @@ import type { Recipe } from '../types';
 const recipes = recipesData as Recipe[];
 
 export default function Program() {
-  const { profile, programId, setProgramId, completedSessions, setCompletedSessions } = useAppData();
+  const { profile, programId, setProgramId, completedSessions, setCompletedSessions, exerciseLogs } = useAppData();
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
 
   const program = useMemo(() => (profile ? generateProgram(profile) : null), [profile]);
@@ -98,16 +99,24 @@ export default function Program() {
                   {done && <span className="badge badge--done">Terminée</span>}
                 </div>
                 <ul>
-                  {seance.exercices.map((ex, i) => (
-                    <li className="list-item" key={`${ex.exerciceId}-${i}`}>
-                      <div className="list-item__main">
-                        <span className="list-item__title">{getExerciseName(ex.exerciceId)}</span>
-                        <span className="list-item__subtitle">
-                          {ex.series} séries × {ex.repetitions} · repos {ex.tempsReposSecondes}s
-                        </span>
-                      </div>
-                    </li>
-                  ))}
+                  {seance.exercices.map((ex, i) => {
+                    const progression = suggestNextProgression(getExerciseHistory(ex.exerciceId, exerciseLogs));
+                    return (
+                      <li className="list-item" key={`${ex.exerciceId}-${i}`} style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                        <div className="list-item__main">
+                          <span className="list-item__title">{getExerciseName(ex.exerciceId)}</span>
+                          <span className="list-item__subtitle">
+                            {ex.series} séries × {ex.repetitions} · repos {ex.tempsReposSecondes}s
+                          </span>
+                        </div>
+                        {progression && (
+                          <span className="text-muted" style={{ fontSize: 'var(--font-size-sm)' }}>
+                            💡 {progression}
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
                 <p className="text-muted">{seance.conseils}</p>
                 <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>

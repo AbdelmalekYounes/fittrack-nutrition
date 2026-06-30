@@ -1,16 +1,25 @@
 import { useMemo, useState } from 'react';
 import exercisesData from '../data/exercises.json';
 import Modal from '../components/Modal';
+import { useAppData } from '../hooks/useAppData';
 import { MATERIEL_OPTIONS, NIVEAU_SPORTIF_OPTIONS } from '../utils/profileOptions';
+import { getExerciseHistory, getPersonalRecord, getTotalVolume, suggestNextProgression } from '../utils/exerciseProgression';
+import { formatDateFr } from '../utils/date';
 import type { Exercise, Materiel, NiveauSportif } from '../types';
 
 const exercises = exercisesData as Exercise[];
 
 export default function ExerciseLibrary() {
+  const { exerciseLogs } = useAppData();
   const [search, setSearch] = useState('');
   const [materielFilter, setMaterielFilter] = useState<Materiel | 'tous'>('tous');
   const [niveauFilter, setNiveauFilter] = useState<NiveauSportif | 'tous'>('tous');
   const [selected, setSelected] = useState<Exercise | null>(null);
+
+  const history = selected ? getExerciseHistory(selected.id, exerciseLogs) : [];
+  const record = getPersonalRecord(history);
+  const volume = getTotalVolume(history);
+  const recommendation = suggestNextProgression(history);
 
   const filtered = useMemo(() => {
     return exercises.filter((ex) => {
@@ -120,6 +129,48 @@ export default function ExerciseLibrary() {
           {selected.conseilsSecurite && (
             <div className="disclaimer">🛡️ {selected.conseilsSecurite}</div>
           )}
+
+          <div className="section">
+            <h4>📈 Progression personnelle</h4>
+            {history.length === 0 ? (
+              <p className="text-muted">Pas encore de données pour cet exercice — réalisez-le en mode séance en direct pour commencer le suivi.</p>
+            ) : (
+              <>
+                <div className="grid grid--3">
+                  <div className="card">
+                    <div className="card__title">Record personnel</div>
+                    <div className="card__value">{record?.chargeKg ? `${record.chargeKg} kg × ${record.repetitions}` : `${record?.repetitions} reps`}</div>
+                  </div>
+                  <div className="card">
+                    <div className="card__title">Volume total</div>
+                    <div className="card__value">{Math.round(volume)}</div>
+                  </div>
+                  <div className="card">
+                    <div className="card__title">Dernière séance</div>
+                    <div className="card__value">{formatDateFr(history[0].date)}</div>
+                  </div>
+                </div>
+                {recommendation && (
+                  <div className="goal-banner" style={{ marginTop: 'var(--space-3)' }}>
+                    <span className="goal-banner__icon" aria-hidden="true">💡</span>
+                    <p style={{ margin: 0 }}>{recommendation}</p>
+                  </div>
+                )}
+                <ul style={{ marginTop: 'var(--space-3)' }}>
+                  {history.slice(0, 5).map((log) => (
+                    <li className="list-item" key={log.id}>
+                      <div className="list-item__main">
+                        <span className="list-item__title">{formatDateFr(log.date)}</span>
+                        <span className="list-item__subtitle">
+                          {log.series.map((s) => `${s.repetitions}${s.chargeKg ? `×${s.chargeKg}kg` : ''}`).join(' · ')}
+                        </span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
         </Modal>
       )}
     </div>

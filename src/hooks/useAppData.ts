@@ -18,6 +18,9 @@ import type {
   CompletedSession,
   ScheduledSession,
   WeeklyMealPlan,
+  FoodItem,
+  RecoveryEntry,
+  ExerciseLog,
 } from '../types';
 
 /** Expose toutes les données persistées de l'application ainsi que leurs setters.
@@ -40,6 +43,11 @@ export function useAppData() {
   const [programId, setProgramId] = useLocalStorage<string | null>(STORAGE_KEYS.programId, null);
   const [favorites, setFavorites] = useLocalStorage<string[]>(STORAGE_KEYS.favorites, []);
   const [mealPlan, setMealPlan] = useLocalStorage<WeeklyMealPlan | null>(STORAGE_KEYS.mealPlan, null);
+  // Aliments ajoutés via le scanner de code-barres (OpenFoodFacts) ou manuellement,
+  // distincts de la base statique foods.json afin de ne jamais la modifier à l'exécution.
+  const [customFoods, setCustomFoods] = useLocalStorage<FoodItem[]>(STORAGE_KEYS.customFoods, []);
+  const [recoveryEntries, setRecoveryEntries] = useLocalStorage<RecoveryEntry[]>(STORAGE_KEYS.recoveryEntries, []);
+  const [exerciseLogs, setExerciseLogs] = useLocalStorage<ExerciseLog[]>(STORAGE_KEYS.exerciseLogs, []);
 
   function resetAllData() {
     storageService.clear(ALL_STORAGE_KEYS);
@@ -47,6 +55,9 @@ export function useAppData() {
     setMeals([]);
     setActivities([]);
     setWeights([]);
+    setCustomFoods([]);
+    setRecoveryEntries([]);
+    setExerciseLogs([]);
     setCompletedSessions([]);
     setScheduledSessions([]);
     setProgramId(null);
@@ -81,6 +92,26 @@ export function useAppData() {
     setScheduledSessions((prev) => prev.filter((s) => s.id !== id));
   }
 
+  /** Ajoute (ou met à jour si même id, ex. re-scan du même produit) un aliment personnalisé. */
+  function addCustomFood(food: FoodItem) {
+    setCustomFoods((prev) => [...prev.filter((f) => f.id !== food.id), food]);
+  }
+
+  /** Une seule saisie de récupération par jour : remplace celle du jour si elle existe déjà. */
+  function saveRecoveryEntry(entry: Omit<RecoveryEntry, 'id'>) {
+    setRecoveryEntries((prev) => {
+      const existing = prev.find((r) => r.date === entry.date);
+      if (existing) {
+        return prev.map((r) => (r.id === existing.id ? { ...entry, id: existing.id } : r));
+      }
+      return [...prev, { ...entry, id: crypto.randomUUID() }];
+    });
+  }
+
+  function addExerciseLog(log: Omit<ExerciseLog, 'id'>) {
+    setExerciseLogs((prev) => [...prev, { ...log, id: crypto.randomUUID() }]);
+  }
+
   return {
     profile,
     setProfile,
@@ -104,6 +135,12 @@ export function useAppData() {
     toggleFavorite,
     mealPlan,
     setMealPlan,
+    customFoods,
+    addCustomFood,
+    recoveryEntries,
+    saveRecoveryEntry,
+    exerciseLogs,
+    addExerciseLog,
     loadDemoData,
     resetAllData,
   };

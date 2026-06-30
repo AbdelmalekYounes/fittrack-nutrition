@@ -5,21 +5,30 @@ import { generateProgram, getExerciseName } from '../utils/program';
 import { calculateCaloriesBurned } from '../utils/calculations';
 import { todayISO } from '../utils/date';
 import exercisesData from '../data/exercises.json';
-import type { Exercise, ActivityLog } from '../types';
+import type { Exercise, ActivityLog, DifficulteRessentie } from '../types';
 
 const exercisesLibrary = exercisesData as Exercise[];
 
 interface SeriesState {
   done: boolean;
   reps: string;
+  chargeKg: string;
 }
+
+const DIFFICULTE_OPTIONS: { value: DifficulteRessentie; label: string }[] = [
+  { value: 'tres_facile', label: 'Très facile' },
+  { value: 'facile', label: 'Facile' },
+  { value: 'normale', label: 'Normale' },
+  { value: 'difficile', label: 'Difficile' },
+  { value: 'echec', label: 'Échec' },
+];
 
 /** Mode séance en direct : guide l'utilisateur exercice par exercice et série par série
  * pendant l'entraînement, avec timer de repos, puis enregistre automatiquement la séance
  * dans l'historique d'activités (et la marque terminée dans le programme) à la fin. */
 export default function LiveSession() {
   const { seanceId } = useParams<{ seanceId: string }>();
-  const { profile, setActivities, completedSessions, setCompletedSessions, programId } = useAppData();
+  const { profile, setActivities, completedSessions, setCompletedSessions, programId, addExerciseLog } = useAppData();
 
   const program = useMemo(() => (profile ? generateProgram(profile) : null), [profile]);
   const seance = program?.seances.find((s) => s.id === seanceId) ?? null;
@@ -28,6 +37,7 @@ export default function LiveSession() {
   const [startTime, setStartTime] = useState<number | null>(null);
   const [exerciseIndex, setExerciseIndex] = useState(0);
   const [seriesState, setSeriesState] = useState<SeriesState[][]>([]);
+  const [difficulteState, setDifficulteState] = useState<DifficulteRessentie[]>([]);
   const [restSeconds, setRestSeconds] = useState<number | null>(null);
   const [finished, setFinished] = useState(false);
   const [ressenti, setRessenti] = useState('');
@@ -52,7 +62,10 @@ export default function LiveSession() {
   }
 
   function handleStart() {
-    setSeriesState(seance!.exercices.map((ex) => Array.from({ length: ex.series }, () => ({ done: false, reps: ex.repetitions }))));
+    setSeriesState(
+      seance!.exercices.map((ex) => Array.from({ length: ex.series }, () => ({ done: false, reps: ex.repetitions, chargeKg: '' })))
+    );
+    setDifficulteState(seance!.exercices.map(() => 'normale' as DifficulteRessentie));
     setStartTime(Date.now());
     setStarted(true);
   }
@@ -75,6 +88,16 @@ export default function LiveSession() {
     setSeriesState((prev) =>
       prev.map((exo, i) => (i !== exoIdx ? exo : exo.map((s, j) => (j === serieIdx ? { ...s, reps } : s))))
     );
+  }
+
+  function updateCharge(exoIdx: number, serieIdx: number, chargeKg: string) {
+    setSeriesState((prev) =>
+      prev.map((exo, i) => (i !== exoIdx ? exo : exo.map((s, j) => (j === serieIdx ? { ...s, chargeKg } : s))))
+    );
+  }
+
+  function updateDifficulte(exoIdx: number, value: DifficulteRessentie) {
+    setDifficulteState((prev) => prev.map((d, i) => (i === exoIdx ? value : d)));
   }
 
   function goToExercise(delta: number) {
@@ -101,6 +124,24 @@ export default function LiveSession() {
       ressenti,
     };
     setActivities((prev) => [...prev, { ...entry, id: crypto.randomUUID() }]);
+
+    // Une entrée d'historique par exercice, utilisée par la progression automatique
+    // (record personnel, volume total, recommandation pour la prochaine séance).
+    seance!.exercices.forEach((ex, i) => {
+      const series = (seriesState[i] ?? [])
+        .filter((s) => s.done)
+        .map((s) => ({
+          repetitions: parseInt(s.reps, 10) || 0,
+          chargeKg: s.chargeKg.trim() ? Number(s.chargeKg) : undefined,
+        }));
+      if (series.length === 0) return;
+      addExerciseLog({
+        exerciceId: ex.exerciceId,
+        date: todayISO(),
+        series,
+        difficulte: difficulteState[i] ?? 'normale',
+      });
+    });
 
     if (programId && !completedSessions.some((c) => c.programId === programId && c.seanceId === seance!.id)) {
       setCompletedSessions((prev) => [
@@ -175,15 +216,38 @@ export default function LiveSession() {
               </label>
               <input
                 className="form-input"
-                style={{ maxWidth: 140 }}
+                style={{ maxWidth: 100 }}
                 type="text"
                 value={serie.reps}
                 onChange={(e) => updateReps(exerciseIndex, i, e.target.value)}
                 aria-label={`Répétitions réalisées série ${i + 1}`}
               />
+              <input
+                className="form-input"
+                style={{ maxWidth: 100 }}
+                type="number"
+                placeholder="Charge (kg)"
+                value={serie.chargeKg}
+                onChange={(e) => updateCharge(exerciseIndex, i, e.target.value)}
+                aria-label={`Charge utilisée série ${i + 1}`}
+              />
             </li>
           ))}
         </ul>
+
+        <div className="form-group">
+          <label className="form-label" htmlFor="difficulte">Difficulté ressentie pour cet exercice</label>
+          <select
+            id="difficulte"
+            className="form-select"
+            value={difficulteState[exerciseIndex] ?? 'normale'}
+            onChange={(e) => updateDifficulte(exerciseIndex, e.target.value as DifficulteRessentie)}
+          >
+            {DIFFICULTE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </div>
 
         {restSeconds !== null && restSeconds > 0 && (
           <div className="goal-banner" style={{ marginTop: 'var(--space-4)' }}>
