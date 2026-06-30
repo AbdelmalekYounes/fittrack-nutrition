@@ -4,9 +4,10 @@ import { useNutritionTargets } from '../hooks/useNutritionTargets';
 import Card from '../components/Card';
 import ProgressBar from '../components/ProgressBar';
 import Gauge from '../components/Gauge';
-import { todayISO, startOfWeek } from '../utils/date';
+import { todayISO, startOfWeek, addDays, formatDateFr } from '../utils/date';
 import { generateProgram } from '../utils/program';
 import { recommendRecipeOfDay } from '../utils/recipes';
+import { ACTIVITY_LABELS } from '../utils/activityLabels';
 import recipesData from '../data/recipes.json';
 import type { Recipe } from '../types';
 
@@ -21,7 +22,7 @@ const OBJECTIF_LABELS: Record<string, string> = {
 };
 
 export default function Dashboard() {
-  const { profile, meals, activities, weights, completedSessions } = useAppData();
+  const { profile, meals, activities, weights, completedSessions, scheduledSessions } = useAppData();
   const targets = useNutritionTargets(profile);
 
   if (!profile) {
@@ -62,6 +63,11 @@ export default function Dashboard() {
   const program = generateProgram(profile);
   const completedIds = new Set(completedSessions.map((c) => c.seanceId));
   const nextSession = program.seances.find((s) => !completedIds.has(s.id)) ?? program.seances[0];
+
+  const upcomingLimit = addDays(today, 6);
+  const nextScheduledSession = [...scheduledSessions]
+    .filter((s) => s.date >= today && s.date <= upcomingLimit)
+    .sort((a, b) => (a.date === b.date ? a.heureDebut.localeCompare(b.heureDebut) : a.date.localeCompare(b.date)))[0];
 
   const recommendedRecipe = recommendRecipeOfDay(recipes, {
     objectif: profile.objectif,
@@ -133,8 +139,18 @@ export default function Dashboard() {
 
       <div className="grid grid--3 section">
         <Card title="Séances cette semaine" value={`${sessionsThisWeek} / ${profile.seancesParSemaine}`} />
-        <Card title="Prochaine séance recommandée">
-          {nextSession ? (
+        <Card title={nextScheduledSession ? 'Prochaine séance planifiée' : 'Prochaine séance recommandée'}>
+          {nextScheduledSession ? (
+            <>
+              <p style={{ fontWeight: 600 }}>
+                {nextScheduledSession.titre || ACTIVITY_LABELS[nextScheduledSession.typeActivite]}
+              </p>
+              <p className="text-muted">
+                {formatDateFr(nextScheduledSession.date)} · {nextScheduledSession.heureDebut} - {nextScheduledSession.heureFin}
+              </p>
+              <Link to="/calendrier" className="btn btn-outline btn-sm">Voir le calendrier</Link>
+            </>
+          ) : nextSession ? (
             <>
               <p style={{ fontWeight: 600 }}>{nextSession.nom}</p>
               <Link to="/programme" className="btn btn-outline btn-sm">Voir le programme</Link>

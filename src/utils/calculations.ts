@@ -80,6 +80,8 @@ const MET_TABLE: Record<TypeActivite, number> = {
   football: 7,
   boxe: 9,
   hiit: 8,
+  padel: 6,
+  eva_esport: 4,
   autre: 5,
 };
 

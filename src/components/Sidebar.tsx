@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { to: '/recettes', label: 'Recettes', icon: '📖' },
   { to: '/programme', label: 'Programme', icon: '🏋️' },
   { to: '/activites', label: 'Activités', icon: '🔥' },
+  { to: '/calendrier', label: 'Calendrier', icon: '📅' },
   { to: '/progression', label: 'Progression', icon: '📈' },
 ];
 

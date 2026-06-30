@@ -7,8 +7,16 @@ import {
   buildDemoActivities,
   buildDemoWeights,
   buildDemoCompletedSessions,
+  buildDemoScheduledSessions,
 } from '../utils/storage';
-import type { UserProfile, MealEntry, ActivityLog, WeightEntry, CompletedSession } from '../types';
+import type {
+  UserProfile,
+  MealEntry,
+  ActivityLog,
+  WeightEntry,
+  CompletedSession,
+  ScheduledSession,
+} from '../types';
 
 /** Expose toutes les données persistées de l'application ainsi que leurs setters.
  * Au tout premier lancement (aucune donnée en localStorage), des données de démo
@@ -31,6 +39,10 @@ export function useAppData() {
     STORAGE_KEYS.completedSessions,
     () => buildDemoCompletedSessions()
   );
+  const [scheduledSessions, setScheduledSessions] = useLocalStorage<ScheduledSession[]>(
+    STORAGE_KEYS.scheduledSessions,
+    () => buildDemoScheduledSessions()
+  );
   const [programId, setProgramId] = useLocalStorage<string | null>(STORAGE_KEYS.programId, null);
 
   function resetAllData() {
@@ -40,7 +52,20 @@ export function useAppData() {
     setActivities([]);
     setWeights([]);
     setCompletedSessions([]);
+    setScheduledSessions([]);
     setProgramId(null);
+  }
+
+  function addScheduledSession(session: Omit<ScheduledSession, 'id'>) {
+    setScheduledSessions((prev) => [...prev, { ...session, id: crypto.randomUUID() }]);
+  }
+
+  function updateScheduledSession(id: string, session: Omit<ScheduledSession, 'id'>) {
+    setScheduledSessions((prev) => prev.map((s) => (s.id === id ? { ...session, id } : s)));
+  }
+
+  function deleteScheduledSession(id: string) {
+    setScheduledSessions((prev) => prev.filter((s) => s.id !== id));
   }
 
   return {
@@ -54,6 +79,11 @@ export function useAppData() {
     setWeights,
     completedSessions,
     setCompletedSessions,
+    scheduledSessions,
+    setScheduledSessions,
+    addScheduledSession,
+    updateScheduledSession,
+    deleteScheduledSession,
     programId,
     setProgramId,
     resetAllData,

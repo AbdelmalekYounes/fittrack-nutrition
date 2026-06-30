@@ -7,6 +7,7 @@ import Recipes from './pages/Recipes';
 import Program from './pages/Program';
 import Activities from './pages/Activities';
 import Progress from './pages/Progress';
+import Calendar from './pages/Calendar';
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
         <Route path="/recettes" element={<Recipes />} />
         <Route path="/programme" element={<Program />} />
         <Route path="/activites" element={<Activities />} />
+        <Route path="/calendrier" element={<Calendar />} />
         <Route path="/progression" element={<Progress />} />
       </Route>
     </Routes>

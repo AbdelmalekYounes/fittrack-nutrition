@@ -3,19 +3,8 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import { useAppData } from '../hooks/useAppData';
 import { calculateCaloriesBurned } from '../utils/calculations';
 import { lastNDays, startOfWeek, todayISO, formatDateFr } from '../utils/date';
+import { ACTIVITY_LABELS } from '../utils/activityLabels';
 import type { ActivityLog, TypeActivite, Intensite } from '../types';
-
-const ACTIVITY_LABELS: Record<TypeActivite, string> = {
-  musculation: 'Musculation',
-  course: 'Course',
-  velo: 'Vélo',
-  marche: 'Marche',
-  natation: 'Natation',
-  football: 'Football',
-  boxe: 'Boxe',
-  hiit: 'HIIT',
-  autre: 'Autre',
-};
 
 const INTENSITY_LABELS: Record<Intensite, string> = {
   faible: 'Faible',

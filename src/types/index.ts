@@ -107,6 +107,8 @@ export type TypeActivite =
   | 'football'
   | 'boxe'
   | 'hiit'
+  | 'padel'
+  | 'eva_esport'
   | 'autre';
 
 export type Intensite = 'faible' | 'moyenne' | 'elevee';
@@ -169,4 +171,14 @@ export interface CompletedSession {
   programId: string;
   seanceId: string;
   date: string;
+}
+
+export interface ScheduledSession {
+  id: string;
+  date: string; // ISO yyyy-mm-dd
+  heureDebut: string; // HH:mm
+  heureFin: string; // HH:mm
+  typeActivite: TypeActivite;
+  titre?: string;
+  notes?: string;
 }

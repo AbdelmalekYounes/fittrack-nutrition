@@ -1,6 +1,13 @@
 // Clés localStorage centralisées + données de démo affichées au tout premier lancement.
 
-import type { UserProfile, MealEntry, ActivityLog, WeightEntry, CompletedSession } from '../types';
+import type {
+  UserProfile,
+  MealEntry,
+  ActivityLog,
+  WeightEntry,
+  CompletedSession,
+  ScheduledSession,
+} from '../types';
 import { addDays, todayISO } from './date';
 
 export const STORAGE_KEYS = {
@@ -9,6 +16,7 @@ export const STORAGE_KEYS = {
   activities: 'fittrack:activities',
   weights: 'fittrack:weights',
   completedSessions: 'fittrack:completedSessions',
+  scheduledSessions: 'fittrack:scheduledSessions',
   programId: 'fittrack:programId',
   initialized: 'fittrack:initialized',
 } as const;
@@ -115,4 +123,17 @@ export function buildDemoWeights(): WeightEntry[] {
 
 export function buildDemoCompletedSessions(): CompletedSession[] {
   return [];
+}
+
+export function buildDemoScheduledSessions(): ScheduledSession[] {
+  return [
+    {
+      id: 'demo-scheduled-1',
+      date: addDays(todayISO(), 1),
+      heureDebut: '18:00',
+      heureFin: '19:00',
+      typeActivite: 'musculation',
+      titre: 'Séance haut du corps',
+    },
+  ];
 }

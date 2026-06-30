@@ -5,6 +5,7 @@ const NAV_ITEMS = [
   { to: '/nutrition', label: 'Nutrition', icon: '🍽️' },
   { to: '/programme', label: 'Programme', icon: '🏋️' },
   { to: '/activites', label: 'Activités', icon: '🔥' },
+  { to: '/calendrier', label: 'Calendrier', icon: '📅' },
   { to: '/progression', label: 'Progrès', icon: '📈' },
 ];
 
