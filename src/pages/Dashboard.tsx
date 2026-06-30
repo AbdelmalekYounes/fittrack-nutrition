@@ -4,6 +4,7 @@ import { useNutritionTargets } from '../hooks/useNutritionTargets';
 import Card from '../components/Card';
 import ProgressBar from '../components/ProgressBar';
 import Gauge from '../components/Gauge';
+import Onboarding from '../components/Onboarding';
 import { todayISO, startOfWeek, addDays, formatDateFr } from '../utils/date';
 import { generateProgram } from '../utils/program';
 import { recommendRecipeOfDay } from '../utils/recipes';
@@ -26,13 +27,7 @@ export default function Dashboard() {
   const targets = useNutritionTargets(profile);
 
   if (!profile) {
-    return (
-      <div className="empty-state card">
-        <h2>Bienvenue sur FitTrack Nutrition</h2>
-        <p>Pour démarrer, complétez votre profil afin de calculer vos besoins personnalisés.</p>
-        <Link to="/profil" className="btn btn-primary">Compléter mon profil</Link>
-      </div>
-    );
+    return <Onboarding />;
   }
 
   const today = todayISO();
@@ -48,6 +43,7 @@ export default function Dashboard() {
   );
 
   const caloriesRestantes = targets ? Math.max(0, targets.calories - consumed.calories) : 0;
+  const proteinesRestantes = targets ? Math.max(0, targets.proteines - consumed.proteines) : 0;
 
   const weekStart = startOfWeek(today);
   const sessionsThisWeek = activities.filter((a) => a.date >= weekStart && a.date <= today).length;
@@ -72,10 +68,18 @@ export default function Dashboard() {
   const recommendedRecipe = recommendRecipeOfDay(recipes, {
     objectif: profile.objectif,
     caloriesRestantes,
-    proteinesRestantes: targets ? Math.max(0, targets.proteines - consumed.proteines) : undefined,
+    proteinesRestantes,
     preferencesAlimentaires: profile.preferencesAlimentaires,
     allergies: profile.allergies,
   });
+
+  // Message synthétique "objectif clair" : ce qu'il reste concrètement à faire aujourd'hui.
+  const objectifMessage = targets
+    ? caloriesRestantes <= 0
+      ? "Objectif calorique du jour atteint. Concentrez-vous sur vos protéines si besoin."
+      : `Il vous reste ${Math.round(caloriesRestantes)} kcal et ${Math.round(proteinesRestantes)} g de protéines pour atteindre vos objectifs aujourd'hui.`
+    : null;
+  const seancesRestantes = Math.max(0, profile.seancesParSemaine - sessionsThisWeek);
 
   return (
     <div>
@@ -88,6 +92,20 @@ export default function Dashboard() {
         Les valeurs affichées sont des estimations indicatives et ne constituent pas un avis
         médical.
       </div>
+
+      {objectifMessage && (
+        <div className="goal-banner section">
+          <span className="goal-banner__icon" aria-hidden="true">🎯</span>
+          <div>
+            <p style={{ margin: 0, fontWeight: 600 }}>{objectifMessage}</p>
+            <p className="text-muted" style={{ margin: 0 }}>
+              {seancesRestantes > 0
+                ? `Encore ${seancesRestantes} séance${seancesRestantes > 1 ? 's' : ''} cette semaine pour atteindre votre objectif de ${profile.seancesParSemaine}.`
+                : 'Objectif de séances de la semaine atteint, bravo !'}
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid--3 section">
         <Card title="Objectif actuel" value={OBJECTIF_LABELS[profile.objectif]} />

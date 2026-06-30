@@ -20,9 +20,15 @@
   gap: var(--space-2);
   font-size: var(--font-size-lg);
   font-weight: 800;
-  color: var(--color-primary);
   padding: 0 var(--space-2);
   margin-bottom: var(--space-5);
+}
+
+.sidebar__logo span:last-child {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .sidebar__nav {
@@ -101,6 +107,10 @@
 
 .page-header {
   margin-bottom: var(--space-5);
+}
+
+.page-header h1 {
+  letter-spacing: -0.02em;
 }
 
 .grid {

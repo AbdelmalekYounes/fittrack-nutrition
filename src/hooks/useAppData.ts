@@ -19,31 +19,24 @@ import type {
 } from '../types';
 
 /** Expose toutes les données persistées de l'application ainsi que leurs setters.
- * Au tout premier lancement (aucune donnée en localStorage), des données de démo
- * sont injectées pour que l'application ne soit pas vide. */
+ * Au tout premier lancement, l'application démarre vide : c'est l'écran d'onboarding
+ * (voir Onboarding.tsx) qui guide la création du profil, avec un raccourci optionnel
+ * pour charger des données de démonstration via loadDemoData(). */
 export function useAppData() {
-  const [profile, setProfile] = useLocalStorage<UserProfile | null>(
-    STORAGE_KEYS.profile,
-    () => buildDemoProfile()
-  );
-  const [meals, setMeals] = useLocalStorage<MealEntry[]>(STORAGE_KEYS.meals, () => buildDemoMeals());
-  const [activities, setActivities] = useLocalStorage<ActivityLog[]>(
-    STORAGE_KEYS.activities,
-    () => buildDemoActivities()
-  );
-  const [weights, setWeights] = useLocalStorage<WeightEntry[]>(
-    STORAGE_KEYS.weights,
-    () => buildDemoWeights()
-  );
+  const [profile, setProfile] = useLocalStorage<UserProfile | null>(STORAGE_KEYS.profile, null);
+  const [meals, setMeals] = useLocalStorage<MealEntry[]>(STORAGE_KEYS.meals, []);
+  const [activities, setActivities] = useLocalStorage<ActivityLog[]>(STORAGE_KEYS.activities, []);
+  const [weights, setWeights] = useLocalStorage<WeightEntry[]>(STORAGE_KEYS.weights, []);
   const [completedSessions, setCompletedSessions] = useLocalStorage<CompletedSession[]>(
     STORAGE_KEYS.completedSessions,
-    () => buildDemoCompletedSessions()
+    []
   );
   const [scheduledSessions, setScheduledSessions] = useLocalStorage<ScheduledSession[]>(
     STORAGE_KEYS.scheduledSessions,
-    () => buildDemoScheduledSessions()
+    []
   );
   const [programId, setProgramId] = useLocalStorage<string | null>(STORAGE_KEYS.programId, null);
+  const [favorites, setFavorites] = useLocalStorage<string[]>(STORAGE_KEYS.favorites, []);
 
   function resetAllData() {
     ALL_STORAGE_KEYS.forEach((key) => window.localStorage.removeItem(key));
@@ -54,6 +47,22 @@ export function useAppData() {
     setCompletedSessions([]);
     setScheduledSessions([]);
     setProgramId(null);
+    setFavorites([]);
+  }
+
+  /** Charge en un clic un jeu de données de démonstration complet (profil fictif "Alex"
+   * + repas/activités/pesées d'exemple), pour découvrir l'app sans tout saisir à la main. */
+  function loadDemoData() {
+    setProfile(buildDemoProfile());
+    setMeals(buildDemoMeals());
+    setActivities(buildDemoActivities());
+    setWeights(buildDemoWeights());
+    setCompletedSessions(buildDemoCompletedSessions());
+    setScheduledSessions(buildDemoScheduledSessions());
+  }
+
+  function toggleFavorite(foodId: string) {
+    setFavorites((prev) => (prev.includes(foodId) ? prev.filter((id) => id !== foodId) : [...prev, foodId]));
   }
 
   function addScheduledSession(session: Omit<ScheduledSession, 'id'>) {
@@ -86,6 +95,9 @@ export function useAppData() {
     deleteScheduledSession,
     programId,
     setProgramId,
+    favorites,
+    toggleFavorite,
+    loadDemoData,
     resetAllData,
   };
 }

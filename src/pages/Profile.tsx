@@ -1,74 +1,15 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../hooks/useAppData';
-import type {
-  UserProfile,
-  Sexe,
-  NiveauSportif,
-  Objectif,
-  Materiel,
-  PreferenceAlimentaire,
-  NiveauActivite,
-} from '../types';
-import { buildDemoProfile } from '../utils/storage';
-
-const MATERIEL_OPTIONS: { value: Materiel; label: string }[] = [
-  { value: 'aucun', label: 'Aucun (poids du corps)' },
-  { value: 'halteres', label: 'Haltères' },
-  { value: 'elastiques', label: 'Élastiques' },
-  { value: 'salle_de_sport', label: 'Salle de sport' },
-  { value: 'velo', label: 'Vélo' },
-  { value: 'tapis_de_course', label: 'Tapis de course' },
-];
-
-const PREFERENCE_OPTIONS: { value: PreferenceAlimentaire; label: string }[] = [
-  { value: 'normal', label: 'Normal' },
-  { value: 'halal', label: 'Halal' },
-  { value: 'vegetarien', label: 'Végétarien' },
-  { value: 'sans_lactose', label: 'Sans lactose' },
-  { value: 'sans_gluten', label: 'Sans gluten' },
-];
-
-const OBJECTIF_OPTIONS: { value: Objectif; label: string }[] = [
-  { value: 'perte_de_poids', label: 'Perte de poids' },
-  { value: 'renforcement_musculaire', label: 'Renforcement musculaire' },
-  { value: 'prise_de_muscle', label: 'Prise de muscle' },
-  { value: 'maintien', label: 'Maintien' },
-  { value: 'recomposition_corporelle', label: 'Recomposition corporelle' },
-];
-
-const NIVEAU_SPORTIF_OPTIONS: { value: NiveauSportif; label: string }[] = [
-  { value: 'debutant', label: 'Débutant' },
-  { value: 'intermediaire', label: 'Intermédiaire' },
-  { value: 'avance', label: 'Avancé' },
-];
-
-const NIVEAU_ACTIVITE_OPTIONS: { value: NiveauActivite; label: string }[] = [
-  { value: 'sedentaire', label: 'Sédentaire (peu ou pas d\'exercice)' },
-  { value: 'leger', label: 'Légèrement actif (1-3 jours/semaine)' },
-  { value: 'modere', label: 'Modérément actif (3-5 jours/semaine)' },
-  { value: 'actif', label: 'Actif (6-7 jours/semaine)' },
-  { value: 'tres_actif', label: 'Très actif (travail physique + sport)' },
-];
-
-function emptyProfile(): UserProfile {
-  return {
-    prenom: '',
-    sexe: 'homme',
-    age: 25,
-    tailleCm: 170,
-    poidsActuel: 70,
-    poidsCible: 70,
-    niveauSportif: 'debutant',
-    objectif: 'maintien',
-    seancesParSemaine: 3,
-    dureeSeanceMinutes: 45,
-    materielDisponible: [],
-    preferencesAlimentaires: ['normal'],
-    allergies: [],
-    niveauActivite: 'modere',
-  };
-}
+import type { UserProfile, Sexe, NiveauSportif, Objectif, Materiel, PreferenceAlimentaire, NiveauActivite } from '../types';
+import {
+  MATERIEL_OPTIONS,
+  PREFERENCE_OPTIONS,
+  OBJECTIF_OPTIONS,
+  NIVEAU_SPORTIF_OPTIONS,
+  NIVEAU_ACTIVITE_OPTIONS,
+  emptyProfile,
+} from '../utils/profileOptions';
 
 export default function Profile() {
   const { profile, setProfile, resetAllData } = useAppData();
@@ -140,7 +81,7 @@ export default function Profile() {
     );
     if (!confirmed) return;
     resetAllData();
-    setForm(buildDemoProfile());
+    setForm(emptyProfile());
     navigate('/');
   }
 

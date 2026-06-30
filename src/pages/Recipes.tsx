@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useAppData } from '../hooks/useAppData';
 import { useNutritionTargets } from '../hooks/useNutritionTargets';
-import { filterRecipes, scoreAndSortRecipes } from '../utils/recipes';
+import { filterRecipes, scoreAndSortRecipes, isTopMatch } from '../utils/recipes';
 import Modal from '../components/Modal';
 import type { Recipe, TypeRepas } from '../types';
 import recipesData from '../data/recipes.json';
@@ -16,20 +16,46 @@ const MEAL_TYPE_LABELS: Record<TypeRepas, string> = {
   collation: 'Collation',
 };
 
+/** Présélectionne le type de repas le plus pertinent selon l'heure actuelle, pour
+ * éviter à l'utilisateur de devoir filtrer manuellement à chaque visite. */
+function defaultTypeForHour(): TypeRepas | 'tous' {
+  const hour = new Date().getHours();
+  if (hour >= 6 && hour < 11) return 'petit_dejeuner';
+  if (hour >= 11 && hour < 15) return 'dejeuner';
+  if (hour >= 15 && hour < 19) return 'collation';
+  if (hour >= 19 && hour < 23) return 'diner';
+  return 'tous';
+}
+
 export default function Recipes() {
   const { profile, meals } = useAppData();
   const targets = useNutritionTargets(profile);
   const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState<TypeRepas | 'tous'>('tous');
+  const [typeFilter, setTypeFilter] = useState<TypeRepas | 'tous'>(defaultTypeForHour);
   const [selected, setSelected] = useState<Recipe | null>(null);
 
   const todaysMeals = meals.filter((m) => m.date === todayISO());
   const consumed = todaysMeals.reduce(
-    (acc, m) => ({ calories: acc.calories + m.calories, proteines: acc.proteines + m.proteines }),
-    { calories: 0, proteines: 0 }
+    (acc, m) => ({
+      calories: acc.calories + m.calories,
+      proteines: acc.proteines + m.proteines,
+      glucides: acc.glucides + m.glucides,
+      lipides: acc.lipides + m.lipides,
+    }),
+    { calories: 0, proteines: 0, glucides: 0, lipides: 0 }
   );
   const caloriesRestantes = targets ? Math.max(0, targets.calories - consumed.calories) : undefined;
   const proteinesRestantes = targets ? Math.max(0, targets.proteines - consumed.proteines) : undefined;
+  const glucidesRestantes = targets ? Math.max(0, targets.glucides - consumed.glucides) : undefined;
+  const lipidesRestantes = targets ? Math.max(0, targets.lipides - consumed.lipides) : undefined;
+
+  const scoringOptions = {
+    objectif: profile?.objectif,
+    caloriesRestantes,
+    proteinesRestantes,
+    glucidesRestantes,
+    lipidesRestantes,
+  };
 
   const filtered = useMemo(() => {
     const base = filterRecipes(recipes, {
@@ -38,12 +64,8 @@ export default function Recipes() {
       preferencesAlimentaires: profile?.preferencesAlimentaires,
       allergies: profile?.allergies,
     });
-    return scoreAndSortRecipes(base, {
-      objectif: profile?.objectif,
-      caloriesRestantes,
-      proteinesRestantes,
-    });
-  }, [search, typeFilter, profile, caloriesRestantes, proteinesRestantes]);
+    return scoreAndSortRecipes(base, scoringOptions);
+  }, [search, typeFilter, profile, caloriesRestantes, proteinesRestantes, glucidesRestantes, lipidesRestantes]);
 
   return (
     <div>
@@ -87,7 +109,12 @@ export default function Recipes() {
       <div className="grid grid--3">
         {filtered.map((recipe) => (
           <div className="card card--clickable" key={recipe.id} onClick={() => setSelected(recipe)}>
-            <span className="badge">{MEAL_TYPE_LABELS[recipe.typeRepas]}</span>
+            <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+              <span className="badge">{MEAL_TYPE_LABELS[recipe.typeRepas]}</span>
+              {isTopMatch(recipe, scoringOptions) && (
+                <span className="badge badge--done">★ Recommandé pour vous</span>
+              )}
+            </div>
             <h3 style={{ marginTop: 'var(--space-2)' }}>{recipe.nom}</h3>
             <p className="text-muted">{recipe.tempsPreparationMinutes} min · {recipe.calories} kcal</p>
             <p className="text-muted">P {recipe.proteines}g · G {recipe.glucides}g · L {recipe.lipides}g</p>

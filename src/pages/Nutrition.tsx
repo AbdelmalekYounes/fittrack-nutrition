@@ -4,8 +4,11 @@ import { useNutritionTargets } from '../hooks/useNutritionTargets';
 import ProgressBar from '../components/ProgressBar';
 import FoodPicker from '../components/FoodPicker';
 import type { FoodItem, MealEntry, TypeRepas } from '../types';
-import { todayISO } from '../utils/date';
+import { todayISO, addDays } from '../utils/date';
 import { getFoodEmoji } from '../utils/foodIcons';
+import foodsData from '../data/foods.json';
+
+const foods = foodsData as FoodItem[];
 
 const MEAL_TYPE_LABELS: Record<TypeRepas, string> = {
   petit_dejeuner: 'Petit-déjeuner',
@@ -21,7 +24,7 @@ function emptyManual() {
 }
 
 export default function Nutrition() {
-  const { profile, meals, setMeals } = useAppData();
+  const { profile, meals, setMeals, favorites, toggleFavorite } = useAppData();
   const targets = useNutritionTargets(profile);
 
   const [date, setDate] = useState(todayISO());
@@ -33,6 +36,79 @@ export default function Nutrition() {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const dayMeals = useMemo(() => meals.filter((m) => m.date === date), [meals, date]);
+
+  // Aliments favoris résolus depuis la base, avec la dernière quantité utilisée (sinon 100g par défaut).
+  const favoriteFoods = useMemo(() => foods.filter((f) => favorites.includes(f.id)), [favorites]);
+
+  function lastQuantityFor(nom: string): number {
+    const match = [...meals].filter((m) => m.nom === nom).sort((a, b) => b.date.localeCompare(a.date))[0];
+    return match?.quantiteGrammes ?? 100;
+  }
+
+  // Repas récents : dernières combinaisons distinctes (nom + quantité) utilisées, les plus récentes en premier.
+  const recentMeals = useMemo(() => {
+    const seen = new Set<string>();
+    const result: MealEntry[] = [];
+    for (const meal of [...meals].sort((a, b) => b.date.localeCompare(a.date))) {
+      const key = `${meal.nom}__${meal.quantiteGrammes}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      result.push(meal);
+      if (result.length >= 8) break;
+    }
+    return result;
+  }, [meals]);
+
+  const previousDayMeals = useMemo(
+    () => meals.filter((m) => m.date === addDays(date, -1)),
+    [meals, date]
+  );
+
+  /** Ajoute un repas instantanément (date/type de repas courants) sans passer par le formulaire. */
+  function quickAddMeal(entry: Omit<MealEntry, 'id' | 'date' | 'typeRepas'>) {
+    setMeals((prev) => [...prev, { ...entry, date, typeRepas, id: crypto.randomUUID() }]);
+  }
+
+  function quickAddFood(food: FoodItem) {
+    const qty = lastQuantityFor(food.nom);
+    const factor = qty / 100;
+    quickAddMeal({
+      nom: food.nom,
+      quantiteGrammes: qty,
+      calories: Math.round(food.caloriesPour100g * factor),
+      proteines: Math.round(food.proteinesPour100g * factor * 10) / 10,
+      glucides: Math.round(food.glucidesPour100g * factor * 10) / 10,
+      lipides: Math.round(food.lipidesPour100g * factor * 10) / 10,
+      fibres: Math.round(food.fibresPour100g * factor * 10) / 10,
+    });
+  }
+
+  function quickAddFromEntry(meal: MealEntry) {
+    quickAddMeal({
+      nom: meal.nom,
+      quantiteGrammes: meal.quantiteGrammes,
+      calories: meal.calories,
+      proteines: meal.proteines,
+      glucides: meal.glucides,
+      lipides: meal.lipides,
+      fibres: meal.fibres,
+    });
+  }
+
+  function duplicateMealToDate(meal: MealEntry, targetDate: string) {
+    setMeals((prev) => [
+      ...prev,
+      { ...meal, date: targetDate, id: crypto.randomUUID() },
+    ]);
+  }
+
+  function copyPreviousDay() {
+    if (previousDayMeals.length === 0) return;
+    setMeals((prev) => [
+      ...prev,
+      ...previousDayMeals.map((m) => ({ ...m, date, id: crypto.randomUUID() })),
+    ]);
+  }
 
   const totals = dayMeals.reduce(
     (acc, m) => ({
@@ -137,6 +213,52 @@ export default function Nutrition() {
         </div>
       )}
 
+      {(favoriteFoods.length > 0 || recentMeals.length > 0 || previousDayMeals.length > 0) && (
+        <div className="card section">
+          <h3>Ajout rapide — {MEAL_TYPE_LABELS[typeRepas]} du {date}</h3>
+          <p className="text-muted" style={{ marginBottom: 'var(--space-3)' }}>
+            Choisissez le type de repas et la date ci-dessous, puis cliquez pour ajouter instantanément.
+          </p>
+
+          {favoriteFoods.length > 0 && (
+            <div className="quick-add-group">
+              <span className="quick-add-group__label">★ Favoris</span>
+              <div className="quick-add-chips">
+                {favoriteFoods.map((food) => (
+                  <button type="button" key={food.id} className="quick-add-chip" onClick={() => quickAddFood(food)}>
+                    <span className="food-emoji" aria-hidden="true">{getFoodEmoji(food)}</span>
+                    {food.nom}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {recentMeals.length > 0 && (
+            <div className="quick-add-group">
+              <span className="quick-add-group__label">Repas récents</span>
+              <div className="quick-add-chips">
+                {recentMeals.map((meal) => (
+                  <button type="button" key={meal.id} className="quick-add-chip" onClick={() => quickAddFromEntry(meal)}>
+                    <span className="food-emoji" aria-hidden="true">{getFoodEmoji({ id: '', nom: meal.nom })}</span>
+                    {meal.nom} ({meal.quantiteGrammes} g)
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {previousDayMeals.length > 0 && (
+            <div className="quick-add-group">
+              <span className="quick-add-group__label">Journée précédente</span>
+              <button type="button" className="btn btn-outline btn-sm" onClick={copyPreviousDay}>
+                📋 Copier les {previousDayMeals.length} repas de la veille vers le {date}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="card section">
         <h3>{editingId ? 'Modifier le repas' : 'Ajouter un repas'}</h3>
         <form onSubmit={handleSubmit}>
@@ -168,7 +290,12 @@ export default function Nutrition() {
 
           {mode === 'aliment' ? (
             <>
-              <FoodPicker selectedId={selectedFood?.id} onSelect={setSelectedFood} />
+              <FoodPicker
+                selectedId={selectedFood?.id}
+                onSelect={setSelectedFood}
+                favorites={favorites}
+                onToggleFavorite={toggleFavorite}
+              />
               {selectedFood && (
                 <div className="form-group" style={{ marginTop: 'var(--space-3)' }}>
                   <label className="form-label" htmlFor="quantite">
@@ -265,6 +392,7 @@ export default function Nutrition() {
                     </span>
                   </div>
                   <div className="list-item__actions">
+                    <button type="button" className="btn-icon" onClick={() => duplicateMealToDate(meal, date)} aria-label="Dupliquer">📋</button>
                     <button type="button" className="btn-icon" onClick={() => handleEdit(meal)} aria-label="Modifier">✏️</button>
                     <button type="button" className="btn-icon" onClick={() => handleDelete(meal.id)} aria-label="Supprimer">🗑️</button>
                   </div>

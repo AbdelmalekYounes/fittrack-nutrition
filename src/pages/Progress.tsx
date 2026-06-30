@@ -30,6 +30,23 @@ export default function Progress() {
     [weights]
   );
 
+  // Statistiques résumées : poids de départ/actuel/objectif et rythme moyen kg/semaine
+  // calculé entre la première et la dernière pesée enregistrée.
+  const weightStats = useMemo(() => {
+    if (!profile) return null;
+    const start = sortedWeights[0];
+    const last = sortedWeights[sortedWeights.length - 1];
+    const startWeight = start?.poids ?? profile.poidsActuel;
+    const currentWeight = last?.poids ?? profile.poidsActuel;
+    let ratePerWeek: number | null = null;
+    if (start && last && start.id !== last.id) {
+      const days = (new Date(last.date).getTime() - new Date(start.date).getTime()) / 86_400_000;
+      const weeks = days / 7;
+      if (weeks > 0) ratePerWeek = (currentWeight - startWeight) / weeks;
+    }
+    return { startWeight, currentWeight, targetWeight: profile.poidsCible, ratePerWeek };
+  }, [profile, sortedWeights]);
+
   function resetForm() {
     setForm(emptyForm());
     setEditingId(null);
@@ -134,6 +151,31 @@ export default function Progress() {
           </div>
         </form>
       </div>
+
+      {weightStats && (
+        <div className="grid grid--3 section">
+          <div className="card">
+            <div className="card__title">Poids de départ</div>
+            <div className="card__value">{weightStats.startWeight} kg</div>
+          </div>
+          <div className="card">
+            <div className="card__title">Poids actuel</div>
+            <div className="card__value">{weightStats.currentWeight} kg</div>
+            <p className="text-muted" style={{ marginTop: 'var(--space-1)' }}>Objectif : {weightStats.targetWeight} kg</p>
+          </div>
+          <div className="card">
+            <div className="card__title">Rythme moyen</div>
+            <div className="card__value">
+              {weightStats.ratePerWeek !== null ? `${weightStats.ratePerWeek > 0 ? '+' : ''}${weightStats.ratePerWeek.toFixed(2)} kg/sem.` : '—'}
+            </div>
+            <p className="text-muted" style={{ marginTop: 'var(--space-1)' }}>
+              {weightStats.ratePerWeek === null
+                ? 'Ajoutez au moins 2 pesées pour calculer votre rythme.'
+                : 'Entre votre première et votre dernière pesée.'}
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="card section">
         <h3>Évolution du poids</h3>
