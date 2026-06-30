@@ -1,12 +1,15 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { lazy, Suspense, useMemo, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppData } from '../hooks/useAppData';
 import { useNutritionTargets } from '../hooks/useNutritionTargets';
 import ProgressBar from '../components/ProgressBar';
 import FoodPicker from '../components/FoodPicker';
-import BarcodeScanner from '../components/BarcodeScanner';
 import VoiceMealEntry from '../components/VoiceMealEntry';
 import FreeMealModal from '../components/FreeMealModal';
+
+// Chargement différé : @zxing/library (scanner code-barres) est volumineuse et n'est
+// nécessaire que si l'utilisateur ouvre réellement le scanner, pas au chargement de la page.
+const BarcodeScanner = lazy(() => import('../components/BarcodeScanner'));
 import type { FoodItem, MealEntry, TypeRepas } from '../types';
 import { todayISO, addDays } from '../utils/date';
 import { getFoodEmoji } from '../utils/foodIcons';
@@ -426,10 +429,12 @@ export default function Nutrition() {
       )}
 
       {scannerOpen && (
-        <BarcodeScanner
-          onClose={() => setScannerOpen(false)}
-          onAddFood={(food, qty) => addFoodWithQuantity(food, qty)}
-        />
+        <Suspense fallback={null}>
+          <BarcodeScanner
+            onClose={() => setScannerOpen(false)}
+            onAddFood={(food, qty) => addFoodWithQuantity(food, qty)}
+          />
+        </Suspense>
       )}
 
       {voiceOpen && (

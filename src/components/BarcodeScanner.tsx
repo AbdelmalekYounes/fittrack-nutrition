@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import Modal from './Modal';
 import { useAppData } from '../hooks/useAppData';
 import { lookupProductByBarcode, type ProductLookupResult } from '../services/openFoodFactsService';
-import { isCameraSupported, isBarcodeDetectionSupported, startCameraStream, stopCameraStream, detectBarcodeFromVideo } from '../services/barcodeService';
+import { isCameraSupported, startBarcodeScan, type BarcodeScanHandle } from '../services/barcodeService';
 import type { FoodItem } from '../types';
 
 const NUTRISCORE_COLORS: Record<string, string> = {
@@ -18,15 +18,15 @@ interface BarcodeScannerProps {
   onAddFood: (food: FoodItem, quantiteGrammes: number) => void;
 }
 
-/** Modal "Scanner un produit" : caméra + détection de code-barres si le navigateur le
- * permet (API native BarcodeDetector, sans dépendance externe), avec saisie manuelle du
- * code-barres toujours disponible en repli. Interroge OpenFoodFacts puis permet d'ajouter
- * le produit au repas et/ou de le sauvegarder dans les favoris. */
+/** Modal "Scanner un produit" : caméra + détection de code-barres via @zxing/library (décodage
+ * par analyse d'image en JavaScript pur, fonctionne sur tous les navigateurs avec caméra —
+ * Chrome, Firefox, Safari iOS/macOS compris), avec saisie manuelle du code-barres toujours
+ * disponible en repli. Interroge OpenFoodFacts puis permet d'ajouter le produit au repas
+ * et/ou de le sauvegarder dans les favoris. */
 export default function BarcodeScanner({ onClose, onAddFood }: BarcodeScannerProps) {
   const { addCustomFood, toggleFavorite, favorites } = useAppData();
   const videoRef = useRef<HTMLVideoElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const scanIntervalRef = useRef<number | null>(null);
+  const scanHandleRef = useRef<BarcodeScanHandle | null>(null);
 
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -36,38 +36,32 @@ export default function BarcodeScanner({ onClose, onAddFood }: BarcodeScannerPro
   const [quantite, setQuantite] = useState(100);
 
   const cameraSupported = isCameraSupported();
-  const detectionSupported = isBarcodeDetectionSupported();
 
   useEffect(() => {
     return () => {
-      if (scanIntervalRef.current) window.clearInterval(scanIntervalRef.current);
-      stopCameraStream(streamRef.current);
+      scanHandleRef.current?.stop();
     };
   }, []);
 
   async function handleStartCamera() {
     setCameraError(null);
-    try {
-      const stream = await startCameraStream(videoRef.current!);
-      streamRef.current = stream;
-      setCameraActive(true);
-      scanIntervalRef.current = window.setInterval(async () => {
-        if (!videoRef.current) return;
-        const code = await detectBarcodeFromVideo(videoRef.current);
-        if (code) {
-          handleStopCamera();
-          handleLookup(code);
-        }
-      }, 600);
-    } catch {
-      setCameraError("Impossible d'accéder à la caméra (permission refusée ou indisponible). Utilisez la saisie manuelle ci-dessous.");
-    }
+    setCameraActive(true);
+    scanHandleRef.current = await startBarcodeScan(
+      videoRef.current!,
+      (code) => {
+        handleStopCamera();
+        handleLookup(code);
+      },
+      (message) => {
+        setCameraError(message);
+        setCameraActive(false);
+      }
+    );
   }
 
   function handleStopCamera() {
-    if (scanIntervalRef.current) window.clearInterval(scanIntervalRef.current);
-    stopCameraStream(streamRef.current);
-    streamRef.current = null;
+    scanHandleRef.current?.stop();
+    scanHandleRef.current = null;
     setCameraActive(false);
   }
 
@@ -86,7 +80,7 @@ export default function BarcodeScanner({ onClose, onAddFood }: BarcodeScannerPro
     <Modal title="Scanner un produit" onClose={onClose}>
       {!product && (
         <>
-          {cameraSupported && detectionSupported ? (
+          {cameraSupported ? (
             <div className="section">
               {!cameraActive ? (
                 <button type="button" className="btn btn-primary" onClick={handleStartCamera}>
@@ -98,13 +92,12 @@ export default function BarcodeScanner({ onClose, onAddFood }: BarcodeScannerPro
                 </button>
               )}
               <video ref={videoRef} className="barcode-video" style={{ display: cameraActive ? 'block' : 'none' }} muted playsInline />
+              {cameraActive && <p className="text-muted">Visez le code-barres avec la caméra...</p>}
               {cameraError && <p className="form-error">{cameraError}</p>}
             </div>
           ) : (
             <p className="text-muted section">
-              {cameraSupported
-                ? 'La détection de code-barres n\'est pas supportée par ce navigateur. Utilisez la saisie manuelle ci-dessous.'
-                : "Aucune caméra détectée sur cet appareil. Utilisez la saisie manuelle ci-dessous."}
+              Aucune caméra détectée sur cet appareil. Utilisez la saisie manuelle ci-dessous.
             </p>
           )}
 

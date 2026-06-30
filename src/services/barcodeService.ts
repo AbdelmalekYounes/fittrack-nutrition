@@ -1,50 +1,49 @@
 // Service dédié à l'accès caméra et à la détection de code-barres dans le navigateur.
-// Utilise l'API native `BarcodeDetector` (disponible sur Chrome/Edge/Android — pas de
-// dépendance externe ajoutée) avec repli explicite : si la caméra ou la détection ne sont
-// pas supportées, le composant appelant doit proposer la saisie manuelle du code-barres.
-
-declare global {
-  interface Window {
-    BarcodeDetector?: new (options?: { formats: string[] }) => {
-      detect: (source: CanvasImageSource) => Promise<{ rawValue: string }[]>;
-    };
-  }
-}
+// Utilise la librairie @zxing/library (décodage par analyse d'image en pur JavaScript) afin
+// de fonctionner sur TOUS les navigateurs avec caméra (Chrome, Firefox, Safari iOS/macOS...),
+// contrairement à l'API native `BarcodeDetector` qui n'est disponible que sur Chrome/Edge.
+import { BrowserMultiFormatReader, NotFoundException } from '@zxing/library';
 
 export function isCameraSupported(): boolean {
   return typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
 }
 
-export function isBarcodeDetectionSupported(): boolean {
-  return typeof window !== 'undefined' && 'BarcodeDetector' in window;
+export interface BarcodeScanHandle {
+  stop: () => void;
 }
 
-/** Démarre le flux caméra arrière (si disponible) et l'attache à l'élément vidéo fourni. */
-export async function startCameraStream(videoEl: HTMLVideoElement): Promise<MediaStream> {
-  const stream = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode: 'environment' },
-    audio: false,
-  });
-  videoEl.srcObject = stream;
-  await videoEl.play();
-  return stream;
+/** Choisit la caméra arrière si plusieurs sont disponibles (libellé contenant "back"/"arrière"
+ * sur la plupart des appareils mobiles), sinon la dernière caméra listée (souvent la caméra
+ * arrière sur mobile), sinon la première disponible. */
+async function pickRearCameraId(reader: BrowserMultiFormatReader): Promise<string | undefined> {
+  const devices = await reader.listVideoInputDevices();
+  if (devices.length === 0) return undefined;
+  const rear = devices.find((d) => /back|arri[eè]re|rear|environment/i.test(d.label));
+  return (rear ?? devices[devices.length - 1]).deviceId;
 }
 
-export function stopCameraStream(stream: MediaStream | null): void {
-  stream?.getTracks().forEach((track) => track.stop());
-}
-
-/** Tente de détecter un code-barres dans l'image vidéo courante. Retourne `null` si
- * aucun code n'est détecté sur cette frame (pas une erreur : on réessaiera à la frame suivante). */
-export async function detectBarcodeFromVideo(videoEl: HTMLVideoElement): Promise<string | null> {
-  if (!window.BarcodeDetector) return null;
+/** Démarre la détection continue de code-barres sur l'élément vidéo fourni. `onDetected` est
+ * appelé avec le code dès qu'un code-barres valide est lu ; `onError` en cas d'échec d'accès
+ * à la caméra (permission refusée, aucune caméra, etc.). Le scan continue jusqu'à `stop()`. */
+export async function startBarcodeScan(
+  videoEl: HTMLVideoElement,
+  onDetected: (code: string) => void,
+  onError: (message: string) => void
+): Promise<BarcodeScanHandle> {
+  const reader = new BrowserMultiFormatReader();
   try {
-    const detector = new window.BarcodeDetector({
-      formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'],
+    const deviceId = await pickRearCameraId(reader);
+    await reader.decodeFromVideoDevice(deviceId, videoEl, (result, err) => {
+      if (result) {
+        onDetected(result.getText());
+      } else if (err && !(err instanceof NotFoundException)) {
+        // NotFoundException = aucun code détecté sur cette frame, ce n'est pas une erreur :
+        // ZXing l'émet en continu tant qu'aucun code-barres n'est dans le champ de la caméra.
+        onError('La lecture du flux vidéo a échoué.');
+      }
     });
-    const results = await detector.detect(videoEl);
-    return results[0]?.rawValue ?? null;
   } catch {
-    return null;
+    onError("Impossible d'accéder à la caméra (permission refusée ou indisponible).");
   }
+  return { stop: () => reader.reset() };
 }

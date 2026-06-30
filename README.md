@@ -24,7 +24,7 @@ sont stockées en local dans le navigateur via `localStorage` — aucune informa
 - **Confidentialité** : explication claire des données stockées et du fonctionnement 100% local.
 
 ### Fonctionnalités intelligentes
-- **Scanner code-barres** (page Nutrition) : recherche d'un produit via [OpenFoodFacts](https://world.openfoodfacts.org/) par code-barres (caméra avec l'API native `BarcodeDetector` si disponible, sinon saisie manuelle toujours possible) — nom, calories, protéines, glucides, lipides, fibres, sel, Nutri-Score, allergènes, ingrédients ; ajout direct au repas et/ou aux favoris. Fallback géré pour produit introuvable, caméra indisponible, API hors service ou données incomplètes.
+- **Scanner code-barres** (page Nutrition) : recherche d'un produit via [OpenFoodFacts](https://world.openfoodfacts.org/) par code-barres (caméra via `@zxing/library`, qui fonctionne sur tous les navigateurs avec caméra — Chrome, Firefox, Safari iOS/macOS compris — chargée à la demande uniquement quand le scanner est ouvert ; sinon saisie manuelle toujours possible) — nom, calories, protéines, glucides, lipides, fibres, sel, Nutri-Score, allergènes, ingrédients ; ajout direct au repas et/ou aux favoris. Fallback géré pour produit introuvable, caméra indisponible, API hors service ou données incomplètes.
 - **Ajout de repas par voix** (page Nutrition) : reconnaissance vocale du navigateur (Web Speech API) ou saisie texte équivalente, analyse automatique en aliments + quantités, écran de confirmation/correction avant ajout réel.
 - **Mode restaurant / repas libre** (page Nutrition) : estimation rapide basse/moyenne/haute pour 12 types de repas difficiles à calculer (pizza, burger, kebab, buffet...), avec un conseil bienveillant pour équilibrer la suite de la journée.
 - **Analyse intelligente** (coach anti-stagnation) : analyse des 14 et 30 derniers jours (stagnation du poids, déficit insuffisant/trop agressif, protéines basses, activité insuffisante, manque de régularité, données insuffisantes) avec recommandations toujours bornées à des valeurs sûres.
@@ -58,9 +58,13 @@ node scripts/generate-icons.cjs
 - recharts (graphiques)
 - CSS pur (aucune librairie de style)
 - Persistance via `localStorage` uniquement, isolée derrière une couche de services
-- APIs navigateur natives uniquement (Web Speech API pour la voix, `BarcodeDetector` pour le
-  scan de code-barres, `getUserMedia` pour la caméra) : aucune dépendance npm supplémentaire,
-  avec repli (fallback) systématique si l'API n'est pas supportée par le navigateur.
+- APIs navigateur natives (Web Speech API pour la voix, `getUserMedia` pour la caméra), avec
+  repli (fallback) systématique si l'API n'est pas supportée par le navigateur.
+- `@zxing/library` : seule dépendance ajoutée pour une fonctionnalité avancée — décodage de
+  code-barres par analyse d'image, compatible avec tous les navigateurs disposant d'une
+  caméra (contrairement à l'API native `BarcodeDetector`, limitée à Chrome/Edge). Chargée en
+  *lazy loading* (`React.lazy`) : elle n'est téléchargée que si l'utilisateur ouvre le
+  scanner, sans alourdir le chargement initial de l'application.
 - [OpenFoodFacts](https://world.openfoodfacts.org/) : seule API externe utilisée (gratuite,
   sans clé), uniquement pour le scanner de produits ; toutes les autres fonctionnalités
   restent 100% locales même si cette API est indisponible.
