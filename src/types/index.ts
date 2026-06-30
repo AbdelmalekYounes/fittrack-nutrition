@@ -140,6 +140,13 @@ export interface Exercise {
   materiel: Materiel[];
   groupeMusculaire: string;
   instructions: string;
+  // Champs enrichis de la bibliothèque d'exercices — optionnels pour rester
+  // rétrocompatible si un exercice n'a pas encore été complété.
+  niveau?: NiveauSportif[];
+  erreursFrequentes?: string[];
+  varianteFacile?: string;
+  varianteDifficile?: string;
+  conseilsSecurite?: string;
 }
 
 export interface WorkoutExercise {
@@ -183,4 +190,57 @@ export interface ScheduledSession {
   titre?: string;
   notes?: string;
   adversaire?: string; // utilisé notamment pour les séances EVA Esport Virtual Arena
+}
+
+/** Un jour du plan alimentaire hebdomadaire : un id de recette par type de repas. */
+export interface MealPlanDay {
+  date: string;
+  recettes: Record<TypeRepas, string>;
+}
+
+export interface WeeklyMealPlan {
+  id: string;
+  semaineDebut: string; // lundi de la semaine, ISO
+  jours: MealPlanDay[];
+  genereLe: string; // horodatage ISO de génération
+}
+
+/** Bilan hebdomadaire calculé automatiquement (voir utils/weeklyReport.ts). */
+export interface WeeklyReport {
+  semaineDebut: string;
+  semaineFin: string;
+  poidsMoyen: number | null;
+  evolutionPoidsKg: number | null;
+  moyenneCalories: number;
+  moyenneProteines: number;
+  seancesRealisees: number;
+  caloriesBrulees: number;
+  regularitePourcent: number; // % de jours avec au moins un repas enregistré
+  pointsForts: string[];
+  pointsAmeliorer: string[];
+  conseilSemaineSuivante: string;
+}
+
+/** Analyse d'une fenêtre temporelle (7/14/30 jours) pour le moteur d'ajustement. */
+export interface PeriodAnalysis {
+  jours: 7 | 14 | 30;
+  moyenneCalories: number;
+  rythmePoidsKgParSemaine: number | null;
+}
+
+/** Suggestion d'ajustement automatique (voir utils/adjustmentEngine.ts). Toujours
+ * bornée à des valeurs sûres et présentée comme une estimation, pas un avis médical. */
+export interface AdjustmentSuggestion {
+  analyses: PeriodAnalysis[];
+  rythmeAttenduKgParSemaine: number;
+  ajustementCaloriesPropose: number; // delta en kcal/jour, borné
+  nouvellesCaloriesCibles: number;
+  conseilSportif: string;
+  messagePrudence?: string;
+}
+
+/** Avertissement de sécurité sur le profil/objectif (voir utils/safetyCheck.ts). */
+export interface SafetyWarning {
+  niveau: 'attention' | 'alerte';
+  message: string;
 }

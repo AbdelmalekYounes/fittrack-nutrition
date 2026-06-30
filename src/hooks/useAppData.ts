@@ -1,4 +1,5 @@
 import { useLocalStorage } from './useLocalStorage';
+import { storageService } from '../services/storageService';
 import {
   STORAGE_KEYS,
   ALL_STORAGE_KEYS,
@@ -16,6 +17,7 @@ import type {
   WeightEntry,
   CompletedSession,
   ScheduledSession,
+  WeeklyMealPlan,
 } from '../types';
 
 /** Expose toutes les données persistées de l'application ainsi que leurs setters.
@@ -37,9 +39,10 @@ export function useAppData() {
   );
   const [programId, setProgramId] = useLocalStorage<string | null>(STORAGE_KEYS.programId, null);
   const [favorites, setFavorites] = useLocalStorage<string[]>(STORAGE_KEYS.favorites, []);
+  const [mealPlan, setMealPlan] = useLocalStorage<WeeklyMealPlan | null>(STORAGE_KEYS.mealPlan, null);
 
   function resetAllData() {
-    ALL_STORAGE_KEYS.forEach((key) => window.localStorage.removeItem(key));
+    storageService.clear(ALL_STORAGE_KEYS);
     setProfile(null);
     setMeals([]);
     setActivities([]);
@@ -48,6 +51,7 @@ export function useAppData() {
     setScheduledSessions([]);
     setProgramId(null);
     setFavorites([]);
+    setMealPlan(null);
   }
 
   /** Charge en un clic un jeu de données de démonstration complet (profil fictif "Alex"
@@ -96,7 +100,10 @@ export function useAppData() {
     programId,
     setProgramId,
     favorites,
+    setFavorites,
     toggleFavorite,
+    mealPlan,
+    setMealPlan,
     loadDemoData,
     resetAllData,
   };

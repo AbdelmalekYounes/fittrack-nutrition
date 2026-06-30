@@ -11,3 +11,13 @@ createRoot(document.getElementById('root')!).render(
     </BrowserRouter>
   </StrictMode>
 );
+
+// Enregistrement du service worker (PWA) : permet l'installation sur l'écran d'accueil
+// et un fonctionnement hors-ligne basique. Échoue silencieusement si non supporté.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      // Pas bloquant : l'app reste utilisable normalement sans service worker.
+    });
+  });
+}

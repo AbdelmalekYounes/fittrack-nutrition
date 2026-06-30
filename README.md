@@ -1,22 +1,45 @@
 # FitTrack Nutrition
 
-Application web de suivi nutritionnel et sportif, entièrement front-end (aucun backend),
-construite avec **React 18 + Vite + TypeScript**. Toutes les données sont stockées en local
-dans le navigateur via `localStorage` — aucune information n'est envoyée à un serveur.
+Application web de suivi nutritionnel et sportif, **installable comme une PWA**, entièrement
+front-end (aucun backend), construite avec **React 18 + Vite + TypeScript**. Toutes les données
+sont stockées en local dans le navigateur via `localStorage` — aucune information n'est envoyée
+à un serveur (voir la page **Confidentialité** dans l'application).
 
 ## Fonctionnalités
 
-- **Tableau de bord** : résumé du jour (calories, macros, poids, prochaine séance, recette du jour).
-- **Profil** : informations personnelles, objectifs, matériel disponible, préférences alimentaires, allergies.
-- **Nutrition** : journal alimentaire (aliments prédéfinis ou saisie manuelle) avec calcul automatique des macros.
-- **Recettes** : plus de 20 recettes filtrées/triées selon votre profil et vos macros restantes du jour.
-- **Programme** : génération automatique d'un programme d'entraînement selon votre objectif, niveau et matériel.
-- **Activités** : journal des séances sportives avec calcul automatique des calories brûlées (estimation MET) et statistiques hebdomadaires.
-- **Progression** : suivi du poids et des macronutriments dans le temps via des graphiques (recharts).
+### Cœur de l'application
+- **Onboarding** guidé en 4 étapes au premier lancement (ou démarrage avec des données de démo en un clic).
+- **Tableau de bord** : objectif clair du jour, calories/macros restantes, poids, prochaine séance, recette du jour, alertes de sécurité éventuelles.
+- **Profil** : informations personnelles, objectif, matériel disponible, préférences alimentaires, allergies — avec avertissements en temps réel si l'objectif semble incohérent ou risqué.
+- **Nutrition** : journal alimentaire avec aliments prédéfinis (117 aliments, icônes par catégorie), saisie manuelle, **favoris**, **repas récents**, **copie de la veille**, et totaux du jour.
+- **Plan alimentaire hebdomadaire** : génération automatique sur 7 jours (adaptée objectif/préférences/allergies), remplacement d'un repas en un clic, **liste de courses** agrégée.
+- **Recettes** : 20 recettes filtrées/triées selon le profil et les macros restantes (calories, protéines, glucides, lipides), badge « Recommandé pour vous ».
+- **Programme** : génération automatique selon objectif/niveau/matériel, principes d'entraînement (échauffement, RPE, décharge), programmes pour les autres activités physiques (Padel, Course, Vélo, EVA Esport, Natation) avec recette de récupération liée.
+- **Mode séance en direct** : déroulé exercice par exercice, validation série par série, timer de repos, ressenti final, sauvegarde automatique dans l'historique.
+- **Bibliothèque d'exercices** : 21 exercices détaillés (niveau, erreurs fréquentes, variantes facile/difficile, conseils de sécurité).
+- **Activités** : journal des séances avec calcul des calories brûlées (MET ou distance kcal/km), statistiques hebdomadaires.
+- **Calendrier** : planification des séances façon agenda, créneaux libres à la minute.
+- **Progression** : graphiques (poids, calories, protéines, séances), **bilan hebdomadaire automatique** (points forts/à améliorer, conseil pour la semaine), **suggestion d'ajustement automatique** des calories/macros bornée à des valeurs sûres.
+- **Paramètres** : export/import JSON complet des données, réinitialisation.
+- **Confidentialité** : explication claire des données stockées et du fonctionnement 100% local.
 
-Les calculs nutritionnels et caloriques (BMR, TDEE, MET, etc.) sont des **estimations**
-basées sur des formules générales (Mifflin-St Jeor, facteurs d'activité, table de MET) et
-ne remplacent pas un avis médical, diététique ou sportif professionnel.
+Les calculs nutritionnels et caloriques (BMR, TDEE, MET, ajustements, alertes...) sont des
+**estimations** basées sur des formules générales et ne remplacent pas un avis médical,
+diététique ou sportif professionnel — l'application le rappelle systématiquement à l'écran.
+
+## PWA (Progressive Web App)
+
+L'application est installable sur l'écran d'accueil (Android/Chrome, iOS/Safari, desktop) :
+- `public/manifest.json` (nom, icônes, couleurs, mode `standalone`).
+- `public/icons/` : icônes PNG générées via `scripts/generate-icons.cjs` (sans dépendance externe).
+- `public/sw.js` : service worker (cache de l'app shell + stratégie *stale-while-revalidate*) permettant un fonctionnement hors-ligne basique.
+- Le service worker est enregistré automatiquement dans `src/main.tsx`.
+
+Pour régénérer les icônes après un changement de charte graphique :
+
+```bash
+node scripts/generate-icons.cjs
+```
 
 ## Stack technique
 
@@ -25,7 +48,35 @@ ne remplacent pas un avis médical, diététique ou sportif professionnel.
 - react-router-dom (navigation)
 - recharts (graphiques)
 - CSS pur (aucune librairie de style)
-- Persistance via `localStorage` uniquement
+- Persistance via `localStorage` uniquement, isolée derrière une couche de services
+
+## Architecture des données (préparée pour une future migration serveur)
+
+Aucun composant ni hook ne touche `localStorage` directement : tout passe par
+`src/services/storageService.ts`, seul point de contact avec le stockage du navigateur.
+`src/hooks/useAppData.ts` expose les données et leurs setters aux pages via ce service, et
+`src/services/backupService.ts` gère la construction/validation des fichiers d'export-import,
+indépendamment du mécanisme de stockage. Le jour où l'application devra migrer vers un backend
+(ex. Supabase), seule cette couche service nécessitera d'être adaptée (passage à des appels
+asynchrones) — les pages et composants n'auront pas à changer.
+
+```
+src/
+  components/   Composants UI réutilisables (Sidebar, MobileNav, Card, ProgressBar, Gauge,
+                Modal, FoodPicker, Layout, Onboarding, SafetyWarnings)
+  pages/        Pages de l'application (Dashboard, Profile, Nutrition, MealPlan, Recipes,
+                Program, LiveSession, ExerciseLibrary, Activities, Calendar, Progress,
+                Settings, Privacy)
+  hooks/        Hooks personnalisés (useLocalStorage, useAppData, useNutritionTargets)
+  services/     Couche de persistance isolée (storageService, backupService)
+  utils/        Logique métier (calculations, program, cardioPrograms, recipes, mealPlan,
+                weeklyReport, adjustmentEngine, safetyCheck, storage, date, activityLabels,
+                foodIcons, profileOptions)
+  data/         Données statiques (aliments, recettes, exercices)
+  types/        Types TypeScript partagés
+  styles/       Feuilles de style CSS (variables, global, layout, components)
+scripts/        Scripts utilitaires (génération des icônes PWA)
+```
 
 ## Installation
 
@@ -68,24 +119,12 @@ npm run preview
    direct à l'URL ou d'un rafraîchissement de page sur Netlify.
 4. Déployez. Aucune variable d'environnement n'est nécessaire : l'application n'a pas de backend.
 
-## Données de démonstration
+## Données : démarrage, sauvegarde et réinitialisation
 
-Au tout premier lancement (aucune donnée en `localStorage`), un profil d'exemple ainsi que
-quelques repas, activités et pesées de démonstration sont pré-remplis afin que l'application
-ne soit pas vide. Vous pouvez les remplacer librement, ou tout réinitialiser via le bouton
-**« Réinitialiser mes données »** dans la page Profil.
+Au tout premier lancement, l'application démarre **vide** : un onboarding guidé permet de créer
+son profil (ou de charger en un clic un jeu de données de démonstration pour découvrir l'app).
 
-## Structure du projet
-
-```
-src/
-  components/   Composants UI réutilisables (Sidebar, MobileNav, Card, ProgressBar, Gauge, Modal, FoodPicker, Layout)
-  pages/        Pages de l'application (Dashboard, Profile, Nutrition, Recipes, Program, Activities, Progress)
-  hooks/        Hooks personnalisés (useLocalStorage, useAppData, useNutritionTargets)
-  utils/        Logique métier (calculations, program, recipes, storage, date)
-  data/         Données statiques (aliments, recettes, exercices)
-  types/        Types TypeScript partagés
-  styles/       Feuilles de style CSS (variables, global, layout, components)
-```
-
-
+Depuis la page **Paramètres**, vous pouvez à tout moment :
+- **Exporter** toutes vos données dans un fichier JSON (sauvegarde ou transfert vers un autre appareil).
+- **Importer** un fichier exporté précédemment (le fichier est validé avant d'être appliqué, pour se protéger d'un fichier corrompu ou invalide).
+- **Réinitialiser** entièrement l'application (suppression définitive des données locales).

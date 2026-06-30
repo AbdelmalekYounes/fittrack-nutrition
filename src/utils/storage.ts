@@ -19,6 +19,7 @@ export const STORAGE_KEYS = {
   scheduledSessions: 'fittrack:scheduledSessions',
   programId: 'fittrack:programId',
   favorites: 'fittrack:favorites',
+  mealPlan: 'fittrack:mealPlan',
   initialized: 'fittrack:initialized',
 } as const;
 

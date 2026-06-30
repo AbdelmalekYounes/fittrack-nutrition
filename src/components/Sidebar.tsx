@@ -4,11 +4,15 @@ const NAV_ITEMS = [
   { to: '/', label: 'Tableau de bord', icon: '🏠', end: true },
   { to: '/profil', label: 'Profil', icon: '👤' },
   { to: '/nutrition', label: 'Nutrition', icon: '🍽️' },
+  { to: '/plan-repas', label: 'Plan de repas', icon: '🗓️' },
   { to: '/recettes', label: 'Recettes', icon: '📖' },
   { to: '/programme', label: 'Programme', icon: '🏋️' },
+  { to: '/exercices', label: 'Exercices', icon: '💪' },
   { to: '/activites', label: 'Activités', icon: '🔥' },
   { to: '/calendrier', label: 'Calendrier', icon: '📅' },
   { to: '/progression', label: 'Progression', icon: '📈' },
+  { to: '/parametres', label: 'Paramètres', icon: '⚙️' },
+  { to: '/confidentialite', label: 'Confidentialité', icon: '🔒' },
 ];
 
 export default function Sidebar() {

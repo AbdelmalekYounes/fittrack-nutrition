@@ -5,10 +5,12 @@ import Card from '../components/Card';
 import ProgressBar from '../components/ProgressBar';
 import Gauge from '../components/Gauge';
 import Onboarding from '../components/Onboarding';
+import SafetyWarnings from '../components/SafetyWarnings';
 import { todayISO, startOfWeek, addDays, formatDateFr } from '../utils/date';
 import { generateProgram } from '../utils/program';
 import { recommendRecipeOfDay } from '../utils/recipes';
 import { ACTIVITY_LABELS } from '../utils/activityLabels';
+import { checkProfileSafety } from '../utils/safetyCheck';
 import recipesData from '../data/recipes.json';
 import type { Recipe } from '../types';
 
@@ -80,6 +82,7 @@ export default function Dashboard() {
       : `Il vous reste ${Math.round(caloriesRestantes)} kcal et ${Math.round(proteinesRestantes)} g de protéines pour atteindre vos objectifs aujourd'hui.`
     : null;
   const seancesRestantes = Math.max(0, profile.seancesParSemaine - sessionsThisWeek);
+  const safetyWarnings = targets ? checkProfileSafety(profile, targets) : [];
 
   return (
     <div>
@@ -92,6 +95,8 @@ export default function Dashboard() {
         Les valeurs affichées sont des estimations indicatives et ne constituent pas un avis
         médical.
       </div>
+
+      <SafetyWarnings warnings={safetyWarnings} />
 
       {objectifMessage && (
         <div className="goal-banner section">

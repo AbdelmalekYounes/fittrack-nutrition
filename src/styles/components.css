@@ -1,3 +1,77 @@
+/* Safety warnings (objectifs dangereux) */
+.safety-warning {
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+}
+
+.safety-warning--alerte {
+  background-color: var(--color-danger-light);
+  color: var(--color-danger);
+}
+
+.safety-warning--attention {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+/* Meal plan (Plan alimentaire hebdomadaire) */
+.meal-plan-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+}
+
+@media (min-width: 1000px) {
+  .meal-plan-grid {
+    grid-template-columns: repeat(7, 1fr);
+  }
+}
+
+.meal-plan-day h3 {
+  margin-bottom: 0;
+}
+
+.meal-plan-slot {
+  margin-top: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+}
+
+.meal-plan-slot__content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.meal-plan-slot__recipe {
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 0;
+  font-weight: 600;
+  color: var(--color-primary);
+  cursor: pointer;
+  flex: 1;
+}
+
+.meal-plan-slot__recipe:hover {
+  text-decoration: underline;
+}
+
+.shopping-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-1);
+}
+
+@media (min-width: 600px) {
+  .shopping-list {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 /* Quick-add (Nutrition) */
 .quick-add-group {
   margin-bottom: var(--space-4);

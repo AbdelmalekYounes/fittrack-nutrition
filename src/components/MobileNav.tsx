@@ -1,5 +1,8 @@
 import { NavLink } from 'react-router-dom';
 
+// Sélection volontairement restreinte des sections les plus utilisées au quotidien
+// (les autres pages restent accessibles via la Sidebar desktop ou des liens internes,
+// ex. Profil -> Paramètres -> Confidentialité, Programme -> Exercices).
 const NAV_ITEMS = [
   { to: '/', label: 'Accueil', icon: '🏠', end: true },
   { to: '/nutrition', label: 'Nutrition', icon: '🍽️' },
@@ -7,6 +10,7 @@ const NAV_ITEMS = [
   { to: '/activites', label: 'Activités', icon: '🔥' },
   { to: '/calendrier', label: 'Calendrier', icon: '📅' },
   { to: '/progression', label: 'Progrès', icon: '📈' },
+  { to: '/profil', label: 'Profil', icon: '👤' },
 ];
 
 export default function MobileNav() {

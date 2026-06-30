@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAppData } from '../hooks/useAppData';
 import { generateProgram, getExerciseName } from '../utils/program';
 import { getCardioPrograms } from '../utils/cardioPrograms';
@@ -55,6 +56,9 @@ export default function Program() {
         <p className="text-muted">
           Programme généré selon votre objectif, votre niveau et votre matériel disponible.
         </p>
+        <Link to="/exercices" className="btn btn-outline btn-sm" style={{ marginTop: 'var(--space-2)' }}>
+          📚 Voir la bibliothèque d'exercices
+        </Link>
       </div>
 
       <div className="card section">
@@ -106,13 +110,18 @@ export default function Program() {
                   ))}
                 </ul>
                 <p className="text-muted">{seance.conseils}</p>
-                <button
-                  type="button"
-                  className={`btn ${done ? 'btn-outline' : 'btn-secondary'}`}
-                  onClick={() => toggleComplete(seance.id)}
-                >
-                  {done ? 'Marquer comme non terminée' : 'Marquer comme terminée'}
-                </button>
+                <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+                  <Link to={`/seance-en-direct/${seance.id}`} className="btn btn-primary">
+                    ▶️ Démarrer la séance
+                  </Link>
+                  <button
+                    type="button"
+                    className={`btn ${done ? 'btn-outline' : 'btn-secondary'}`}
+                    onClick={() => toggleComplete(seance.id)}
+                  >
+                    {done ? 'Marquer comme non terminée' : 'Marquer comme terminée'}
+                  </button>
+                </div>
               </div>
             );
           })}

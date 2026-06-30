@@ -1,4 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { useAppData } from '../hooks/useAppData';
 import { useNutritionTargets } from '../hooks/useNutritionTargets';
 import ProgressBar from '../components/ProgressBar';
@@ -200,6 +201,9 @@ export default function Nutrition() {
       <div className="page-header">
         <h1>Nutrition</h1>
         <p className="text-muted">Enregistrez vos repas et suivez vos macronutriments.</p>
+        <Link to="/plan-repas" className="btn btn-outline btn-sm" style={{ marginTop: 'var(--space-2)' }}>
+          🗓️ Voir mon plan alimentaire de la semaine
+        </Link>
       </div>
 
       {targets && (

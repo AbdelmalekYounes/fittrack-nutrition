@@ -12,7 +12,10 @@ import {
   CartesianGrid,
 } from 'recharts';
 import { useAppData } from '../hooks/useAppData';
+import { useNutritionTargets } from '../hooks/useNutritionTargets';
 import { lastNDays, todayISO, formatDateFr, startOfWeek, addDays } from '../utils/date';
+import { buildWeeklyReport } from '../utils/weeklyReport';
+import { analyzeAndSuggestAdjustment } from '../utils/adjustmentEngine';
 import type { WeightEntry } from '../types';
 
 function emptyForm() {
@@ -21,9 +24,21 @@ function emptyForm() {
 
 export default function Progress() {
   const { profile, weights, setWeights, meals, activities } = useAppData();
+  const targets = useNutritionTargets(profile);
   const [form, setForm] = useState(emptyForm());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [rangeDays, setRangeDays] = useState(30);
+  const [reportWeekStart, setReportWeekStart] = useState(() => startOfWeek(todayISO()));
+
+  const weeklyReport = useMemo(() => {
+    if (!profile || !targets) return null;
+    return buildWeeklyReport({ profile, targets, meals, activities, weights, weekStart: reportWeekStart });
+  }, [profile, targets, meals, activities, weights, reportWeekStart]);
+
+  const adjustment = useMemo(() => {
+    if (!profile || !targets) return null;
+    return analyzeAndSuggestAdjustment(profile, targets, meals, weights, activities);
+  }, [profile, targets, meals, weights, activities]);
 
   const sortedWeights = useMemo(
     () => [...weights].sort((a, b) => a.date.localeCompare(b.date)),
@@ -173,6 +188,107 @@ export default function Progress() {
                 ? 'Ajoutez au moins 2 pesées pour calculer votre rythme.'
                 : 'Entre votre première et votre dernière pesée.'}
             </p>
+          </div>
+        </div>
+      )}
+
+      {weeklyReport && (
+        <div className="card section">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
+            <h3>Bilan hebdomadaire — {formatDateFr(weeklyReport.semaineDebut)} au {formatDateFr(weeklyReport.semaineFin)}</h3>
+            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+              <button type="button" className="btn btn-outline btn-sm" onClick={() => setReportWeekStart((d) => addDays(d, -7))}>← Semaine précédente</button>
+              <button type="button" className="btn btn-outline btn-sm" onClick={() => setReportWeekStart(startOfWeek(todayISO()))}>Cette semaine</button>
+              <button type="button" className="btn btn-outline btn-sm" onClick={() => setReportWeekStart((d) => addDays(d, 7))}>Semaine suivante →</button>
+            </div>
+          </div>
+
+          <div className="grid grid--3" style={{ marginTop: 'var(--space-4)' }}>
+            <div className="card">
+              <div className="card__title">Poids moyen</div>
+              <div className="card__value">{weeklyReport.poidsMoyen !== null ? `${weeklyReport.poidsMoyen} kg` : '—'}</div>
+              {weeklyReport.evolutionPoidsKg !== null && (
+                <p className="text-muted">{weeklyReport.evolutionPoidsKg > 0 ? '+' : ''}{weeklyReport.evolutionPoidsKg} kg sur la semaine</p>
+              )}
+            </div>
+            <div className="card">
+              <div className="card__title">Calories / protéines moyennes</div>
+              <div className="card__value">{weeklyReport.moyenneCalories} kcal</div>
+              <p className="text-muted">{weeklyReport.moyenneProteines} g de protéines / jour</p>
+            </div>
+            <div className="card">
+              <div className="card__title">Régularité</div>
+              <div className="card__value">{weeklyReport.regularitePourcent}%</div>
+              <p className="text-muted">{weeklyReport.seancesRealisees} séance(s) · {weeklyReport.caloriesBrulees} kcal brûlées</p>
+            </div>
+          </div>
+
+          <div className="grid grid--2" style={{ marginTop: 'var(--space-4)' }}>
+            <div>
+              <h4>✅ Points forts</h4>
+              <ul style={{ listStyle: 'disc', paddingLeft: 'var(--space-5)' }}>
+                {weeklyReport.pointsForts.map((point, i) => <li key={i}>{point}</li>)}
+              </ul>
+            </div>
+            <div>
+              <h4>🎯 Points à améliorer</h4>
+              {weeklyReport.pointsAmeliorer.length === 0 ? (
+                <p className="text-muted">Rien à signaler cette semaine.</p>
+              ) : (
+                <ul style={{ listStyle: 'disc', paddingLeft: 'var(--space-5)' }}>
+                  {weeklyReport.pointsAmeliorer.map((point, i) => <li key={i}>{point}</li>)}
+                </ul>
+              )}
+            </div>
+          </div>
+
+          <div className="goal-banner" style={{ marginTop: 'var(--space-4)' }}>
+            <span className="goal-banner__icon" aria-hidden="true">💡</span>
+            <p style={{ margin: 0 }}><strong>Conseil pour la semaine prochaine :</strong> {weeklyReport.conseilSemaineSuivante}</p>
+          </div>
+        </div>
+      )}
+
+      {adjustment && (
+        <div className="card section">
+          <h3>Suggestion d'ajustement automatique</h3>
+          <p className="text-muted">
+            Analyse de vos 7, 14 et 30 derniers jours pour comparer l'évolution réelle à l'objectif prévu.
+          </p>
+          <div className="grid grid--3">
+            {adjustment.analyses.map((a) => (
+              <div className="card" key={a.jours}>
+                <div className="card__title">{a.jours} derniers jours</div>
+                <div className="card__value">{a.moyenneCalories} kcal/j</div>
+                <p className="text-muted">
+                  {a.rythmePoidsKgParSemaine !== null
+                    ? `${a.rythmePoidsKgParSemaine > 0 ? '+' : ''}${a.rythmePoidsKgParSemaine.toFixed(2)} kg/sem.`
+                    : 'Pesées insuffisantes'}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="goal-banner" style={{ marginTop: 'var(--space-4)' }}>
+            <span className="goal-banner__icon" aria-hidden="true">🎯</span>
+            <div>
+              <p style={{ margin: 0, fontWeight: 600 }}>
+                {adjustment.ajustementCaloriesPropose === 0
+                  ? `Calories cibles inchangées : ${adjustment.nouvellesCaloriesCibles} kcal/jour.`
+                  : `Calories cibles suggérées : ${adjustment.nouvellesCaloriesCibles} kcal/jour (${adjustment.ajustementCaloriesPropose > 0 ? '+' : ''}${adjustment.ajustementCaloriesPropose} kcal vs actuellement).`}
+              </p>
+              <p className="text-muted" style={{ margin: 0 }}>{adjustment.conseilSportif}</p>
+            </div>
+          </div>
+
+          {adjustment.messagePrudence && (
+            <div className="disclaimer" style={{ marginTop: 'var(--space-3)', backgroundColor: 'var(--color-danger-light)', color: 'var(--color-danger)' }}>
+              ⚠️ {adjustment.messagePrudence}
+            </div>
+          )}
+
+          <div className="disclaimer" style={{ marginTop: 'var(--space-3)' }}>
+            Ces suggestions sont des estimations automatiques basées sur vos données et ne remplacent pas l'avis d'un professionnel de santé ou d'un diététicien.
           </div>
         </div>
       )}

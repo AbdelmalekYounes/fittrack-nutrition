@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useMemo, useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { useAppData } from '../hooks/useAppData';
 import type { UserProfile, Sexe, NiveauSportif, Objectif, Materiel, PreferenceAlimentaire, NiveauActivite } from '../types';
 import {
@@ -10,14 +10,20 @@ import {
   NIVEAU_ACTIVITE_OPTIONS,
   emptyProfile,
 } from '../utils/profileOptions';
+import { calculateNutritionTargets } from '../utils/calculations';
+import { checkProfileSafety } from '../utils/safetyCheck';
+import SafetyWarnings from '../components/SafetyWarnings';
 
 export default function Profile() {
-  const { profile, setProfile, resetAllData } = useAppData();
-  const navigate = useNavigate();
+  const { profile, setProfile } = useAppData();
   const [form, setForm] = useState<UserProfile>(profile ?? emptyProfile());
   const [allergyInput, setAllergyInput] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saved, setSaved] = useState(false);
+
+  // Avertissements de sécurité calculés en direct sur le formulaire (avant même
+  // l'enregistrement), pour alerter au plus tôt sur un objectif incohérent ou risqué.
+  const safetyWarnings = useMemo(() => checkProfileSafety(form, calculateNutritionTargets(form)), [form]);
 
   function updateField<K extends keyof UserProfile>(key: K, value: UserProfile[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -73,16 +79,6 @@ export default function Profile() {
     if (!validate()) return;
     setProfile(form);
     setSaved(true);
-  }
-
-  function handleReset() {
-    const confirmed = window.confirm(
-      'Voulez-vous vraiment réinitialiser toutes vos données ? Cette action est irréversible.'
-    );
-    if (!confirmed) return;
-    resetAllData();
-    setForm(emptyProfile());
-    navigate('/');
   }
 
   return (
@@ -330,15 +326,14 @@ export default function Profile() {
         </div>
       </form>
 
+      <SafetyWarnings warnings={safetyWarnings} />
+
       <div className="card section" style={{ marginTop: 'var(--space-5)' }}>
-        <h3>Zone de danger</h3>
+        <h3>Sauvegarde et réinitialisation</h3>
         <p className="text-muted">
-          Réinitialiser supprime définitivement votre profil, vos repas, activités, pesées et
-          votre programme. Des données de démonstration seront proposées au prochain démarrage.
+          Exportez vos données ou réinitialisez l'application depuis la page Paramètres.
         </p>
-        <button type="button" className="btn btn-danger" onClick={handleReset}>
-          Réinitialiser mes données
-        </button>
+        <Link to="/parametres" className="btn btn-outline">Aller aux Paramètres</Link>
       </div>
     </div>
   );
