@@ -181,4 +181,5 @@ export interface ScheduledSession {
   typeActivite: TypeActivite;
   titre?: string;
   notes?: string;
+  adversaire?: string; // utilisé notamment pour les séances EVA Esport Virtual Arena
 }

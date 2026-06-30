@@ -34,6 +34,7 @@ interface FormState {
   typeActivite: TypeActivite;
   titre: string;
   notes: string;
+  adversaire: string;
 }
 
 function emptyForm(date: string): FormState {
@@ -44,7 +45,14 @@ function emptyForm(date: string): FormState {
     typeActivite: 'musculation',
     titre: '',
     notes: '',
+    adversaire: '',
   };
+}
+
+function minutesToTime(totalMinutes: number): string {
+  const h = Math.floor(totalMinutes / 60) % 24;
+  const m = totalMinutes % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
 export default function Calendar() {
@@ -68,10 +76,10 @@ export default function Calendar() {
       .sort((a, b) => a.heureDebut.localeCompare(b.heureDebut));
   }
 
-  function openCreateModal(date: string, hour?: number) {
+  function openCreateModal(date: string, startMinutes?: number) {
     setEditingId(null);
-    const heureDebut = hour !== undefined ? `${hour.toString().padStart(2, '0')}:00` : '18:00';
-    const heureFin = hour !== undefined ? `${(hour + 1).toString().padStart(2, '0')}:00` : '19:00';
+    const heureDebut = startMinutes !== undefined ? minutesToTime(startMinutes) : '18:00';
+    const heureFin = startMinutes !== undefined ? minutesToTime(startMinutes + 60) : '19:00';
     setForm({ ...emptyForm(date), heureDebut, heureFin });
     setModalOpen(true);
   }
@@ -85,6 +93,7 @@ export default function Calendar() {
       typeActivite: session.typeActivite,
       titre: session.titre ?? '',
       notes: session.notes ?? '',
+      adversaire: session.adversaire ?? '',
     });
     setModalOpen(true);
   }
@@ -107,6 +116,7 @@ export default function Calendar() {
       typeActivite: form.typeActivite,
       titre: form.titre.trim() || undefined,
       notes: form.notes.trim() || undefined,
+      adversaire: form.typeActivite === 'eva_esport' ? form.adversaire.trim() || undefined : undefined,
     };
     if (editingId) {
       updateScheduledSession(editingId, payload);
@@ -194,6 +204,7 @@ export default function Calendar() {
                           style={{ backgroundColor: ACTIVITY_COLORS[session.typeActivite] }}
                         />
                         {session.titre || ACTIVITY_LABELS[session.typeActivite]}
+                        {session.adversaire ? ` vs ${session.adversaire}` : ''}
                       </span>
                       <span className="list-item__subtitle">
                         {session.heureDebut} - {session.heureFin} · {ACTIVITY_LABELS[session.typeActivite]}
@@ -237,7 +248,12 @@ export default function Calendar() {
                     className="calendar-grid__slot"
                     key={hour}
                     style={{ height: SLOT_HEIGHT }}
-                    onClick={() => openCreateModal(day, hour)}
+                    onClick={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      const offsetY = e.clientY - rect.top;
+                      const minutesWithinHour = Math.round((offsetY / SLOT_HEIGHT) * 60 / 15) * 15;
+                      openCreateModal(day, hour * 60 + Math.min(45, minutesWithinHour));
+                    }}
                   />
                 ))}
                 {sessionsForDay(day).map((session) => {
@@ -258,10 +274,11 @@ export default function Calendar() {
                         e.stopPropagation();
                         openEditModal(session);
                       }}
-                      title={`${session.titre || ACTIVITY_LABELS[session.typeActivite]} (${session.heureDebut} - ${session.heureFin})`}
+                      title={`${session.titre || ACTIVITY_LABELS[session.typeActivite]}${session.adversaire ? ` vs ${session.adversaire}` : ''} (${session.heureDebut} - ${session.heureFin})`}
                     >
                       <span className="calendar-event__title">
                         {session.titre || ACTIVITY_LABELS[session.typeActivite]}
+                        {session.adversaire ? ` vs ${session.adversaire}` : ''}
                       </span>
                       <span className="calendar-event__time">
                         {session.heureDebut} - {session.heureFin}
@@ -308,6 +325,7 @@ export default function Calendar() {
                   id="calStart"
                   className="form-input"
                   type="time"
+                  step={60}
                   value={form.heureDebut}
                   onChange={(e) => setForm((p) => ({ ...p, heureDebut: e.target.value }))}
                 />
@@ -318,11 +336,28 @@ export default function Calendar() {
                   id="calEnd"
                   className="form-input"
                   type="time"
+                  step={60}
                   value={form.heureFin}
                   onChange={(e) => setForm((p) => ({ ...p, heureFin: e.target.value }))}
                 />
               </div>
             </div>
+            <p className="text-muted" style={{ marginTop: 'calc(var(--space-4) * -1)', marginBottom: 'var(--space-4)' }}>
+              Les horaires sont libres : indiquez n'importe quelle heure et minute (ex. 18:00 à 19:15 ou 19:30).
+            </p>
+            {form.typeActivite === 'eva_esport' && (
+              <div className="form-group">
+                <label className="form-label" htmlFor="calAdversaire">Adversaire</label>
+                <input
+                  id="calAdversaire"
+                  className="form-input"
+                  type="text"
+                  value={form.adversaire}
+                  onChange={(e) => setForm((p) => ({ ...p, adversaire: e.target.value }))}
+                  placeholder="Contre qui est cet entraînement ?"
+                />
+              </div>
+            )}
             <div className="form-group">
               <label className="form-label" htmlFor="calTitre">Titre (optionnel)</label>
               <input
