@@ -71,6 +71,8 @@ export function calculateNutritionTargets(profile: UserProfile): NutritionTarget
 }
 
 // Table de MET (Metabolic Equivalent of Task) approximative par type d'activité.
+// eva_esport (Esport Virtual Arena) correspond à une activité de déplacement physique
+// réel (pas un esport assis) : le MET reflète une marche/course fractionnée en sprints.
 const MET_TABLE: Record<TypeActivite, number> = {
   musculation: 5,
   course: 9.8,
@@ -81,7 +83,7 @@ const MET_TABLE: Record<TypeActivite, number> = {
   boxe: 9,
   hiit: 8,
   padel: 6,
-  eva_esport: 4,
+  eva_esport: 7,
   autre: 5,
 };
 
@@ -91,13 +93,35 @@ const INTENSITY_MULTIPLIER: Record<Intensite, number> = {
   elevee: 1.2,
 };
 
-/** Calories brûlées = MET ajusté * poids(kg) * durée(heures). Estimation indicative. */
+// Coefficient kcal/kg/km pour les activités où la distance parcourue donne une estimation
+// plus fiable que la durée seule. eva_esport est plus coûteux qu'une course continue à
+// distance égale car les sprints fractionnés impliquent des accélérations/décélérations
+// répétées (changements de direction typiques d'une arène esport physique).
+const DISTANCE_KCAL_PER_KG_PER_KM: Partial<Record<TypeActivite, number>> = {
+  course: 1.0,
+  marche: 0.5,
+  velo: 0.35,
+  natation: 1.4,
+  eva_esport: 1.15,
+};
+
+/**
+ * Calories brûlées, estimation indicative.
+ * Si une distance est fournie pour une activité qui s'y prête (course, marche, vélo, EVA
+ * Esport...), on calcule via un coefficient kcal/kg/km, plus précis que la seule durée.
+ * Sinon : MET ajusté à l'intensité * poids(kg) * durée(heures).
+ */
 export function calculateCaloriesBurned(
   typeActivite: TypeActivite,
   intensite: Intensite,
   dureeMinutes: number,
-  poidsKg: number
+  poidsKg: number,
+  distanceKm?: number
 ): number {
+  const distanceCoeff = DISTANCE_KCAL_PER_KG_PER_KM[typeActivite];
+  if (distanceKm && distanceKm > 0 && distanceCoeff) {
+    return Math.round(distanceCoeff * poidsKg * distanceKm);
+  }
   const met = MET_TABLE[typeActivite] * INTENSITY_MULTIPLIER[intensite];
   return Math.round(met * poidsKg * (dureeMinutes / 60));
 }

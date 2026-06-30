@@ -5,6 +5,35 @@
   box-shadow: var(--shadow-sm);
   padding: var(--space-4);
   border: 1px solid var(--color-border);
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+
+.card--clickable {
+  cursor: pointer;
+}
+
+.card--clickable:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-3px);
+  border-color: var(--color-primary-light);
+}
+
+.card--clickable:active {
+  transform: translateY(-1px);
+}
+
+/* Icône emoji représentant un aliment, en l'absence d'API d'images payante */
+.food-emoji {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2em;
+  margin-right: var(--space-1);
+}
+
+.food-picker__name {
+  display: inline-flex;
+  align-items: center;
 }
 
 .card__title {
@@ -315,6 +344,12 @@
   padding: var(--space-3);
   border-bottom: 1px solid var(--color-border);
   gap: var(--space-3);
+  border-radius: var(--radius-sm);
+  transition: background-color 0.15s ease;
+}
+
+.list-item:hover {
+  background-color: var(--color-bg);
 }
 
 .list-item:last-child {
@@ -348,6 +383,10 @@
   font-weight: 700;
   background-color: var(--color-secondary-light);
   color: var(--color-secondary);
+}
+
+.recovery-recipe {
+  margin-top: var(--space-3);
 }
 
 .badge--done {

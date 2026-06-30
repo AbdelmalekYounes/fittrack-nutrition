@@ -123,6 +123,7 @@ export interface ActivityLog {
   notes: string;
   exercicesRealises: string[];
   ressenti: string;
+  distanceKm?: number; // utilisé pour un calcul de calories plus précis (course, vélo, marche, EVA Esport)
 }
 
 export interface WeightEntry {

@@ -74,3 +74,14 @@ export function recommendRecipeOfDay(
   const sorted = scoreAndSortRecipes(filtered, options);
   return sorted[0];
 }
+
+/** Recette la plus riche en protéines compatible avec le profil, utile en récupération
+ * après une séance d'activité physique (musculation comme sports cardio/raquette). */
+export function recommendRecoveryRecipe(
+  recipes: Recipe[],
+  options: Pick<RecipeFilterOptions, 'preferencesAlimentaires' | 'allergies'>
+): Recipe | null {
+  const filtered = filterRecipes(recipes, options);
+  if (filtered.length === 0) return null;
+  return [...filtered].sort((a, b) => b.proteines - a.proteines)[0];
+}

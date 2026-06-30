@@ -86,7 +86,7 @@ export default function Recipes() {
 
       <div className="grid grid--3">
         {filtered.map((recipe) => (
-          <div className="card" key={recipe.id} style={{ cursor: 'pointer' }} onClick={() => setSelected(recipe)}>
+          <div className="card card--clickable" key={recipe.id} onClick={() => setSelected(recipe)}>
             <span className="badge">{MEAL_TYPE_LABELS[recipe.typeRepas]}</span>
             <h3 style={{ marginTop: 'var(--space-2)' }}>{recipe.nom}</h3>
             <p className="text-muted">{recipe.tempsPreparationMinutes} min · {recipe.calories} kcal</p>

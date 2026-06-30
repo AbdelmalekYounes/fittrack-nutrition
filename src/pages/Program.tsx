@@ -1,12 +1,24 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useAppData } from '../hooks/useAppData';
 import { generateProgram, getExerciseName } from '../utils/program';
+import { getCardioPrograms } from '../utils/cardioPrograms';
+import { ACTIVITY_LABELS } from '../utils/activityLabels';
 import { todayISO } from '../utils/date';
+import Modal from '../components/Modal';
+import recipesData from '../data/recipes.json';
+import type { Recipe } from '../types';
+
+const recipes = recipesData as Recipe[];
 
 export default function Program() {
   const { profile, programId, setProgramId, completedSessions, setCompletedSessions } = useAppData();
+  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
 
   const program = useMemo(() => (profile ? generateProgram(profile) : null), [profile]);
+  const cardioPrograms = useMemo(
+    () => (profile ? getCardioPrograms(profile, recipes) : []),
+    [profile]
+  );
 
   if (!profile) {
     return <p className="text-muted">Complétez d'abord votre profil pour générer un programme.</p>;
@@ -61,8 +73,18 @@ export default function Program() {
         )}
       </div>
 
+      <div className="card section">
+        <h3>Principes d'entraînement</h3>
+        <ul>
+          <li>🔥 <strong>Échauffement</strong> : 5 à 10 minutes de cardio léger et de mobilité articulaire avant chaque séance.</li>
+          <li>🧊 <strong>Retour au calme</strong> : étirements doux 5 minutes en fin de séance pour favoriser la récupération.</li>
+          <li>📊 <strong>RPE (effort perçu)</strong> : visez 7-8/10 sur les séries de travail, 9-10/10 réservé aux séances avancées.</li>
+          <li>📅 <strong>Semaine de décharge</strong> : réduisez le volume de 40% toutes les 4 semaines pour permettre la surcompensation.</li>
+        </ul>
+      </div>
+
       {isGenerated ? (
-        <div className="grid grid--2">
+        <div className="grid grid--2 section">
           {program.seances.map((seance) => {
             const done = completedIds.has(seance.id);
             return (
@@ -96,9 +118,75 @@ export default function Program() {
           })}
         </div>
       ) : (
-        <div className="empty-state card">
+        <div className="empty-state card section">
           Cliquez sur « Générer mon programme » pour afficher vos séances.
         </div>
+      )}
+
+      {cardioPrograms.length > 0 && (
+        <div className="section">
+          <div className="page-header">
+            <h2>Autres activités physiques</h2>
+            <p className="text-muted">
+              Plans hebdomadaires pour vos sports en dehors de la salle, avec calories estimées et une recette de récupération adaptée.
+            </p>
+          </div>
+          <div className="grid grid--2">
+            {cardioPrograms.map((cardio) => (
+              <div className="card" key={cardio.id}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h3>{cardio.nom}</h3>
+                  <span className="badge">{ACTIVITY_LABELS[cardio.typeActivite]}</span>
+                </div>
+                <p className="text-muted">
+                  {cardio.seancesParSemaine} séance(s)/semaine · {cardio.dureeMinutes} min
+                  {cardio.distanceKm ? ` · ${cardio.distanceKm} km` : ''}
+                </p>
+                <p>{cardio.conseils}</p>
+                <p>
+                  <strong>≈ {cardio.caloriesParSeance} kcal</strong> brûlées par séance ·{' '}
+                  <strong>{cardio.caloriesParSemaine} kcal</strong>/semaine (estimation)
+                </p>
+                {cardio.recetteRecuperation && (
+                  <div className="recovery-recipe">
+                    <p className="text-muted" style={{ marginBottom: 'var(--space-1)' }}>Recette de récupération recommandée :</p>
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      onClick={() => setSelectedRecipe(cardio.recetteRecuperation)}
+                    >
+                      {cardio.recetteRecuperation.nom} ({cardio.recetteRecuperation.proteines}g protéines)
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {selectedRecipe && (
+        <Modal title={selectedRecipe.nom} onClose={() => setSelectedRecipe(null)}>
+          <p className="text-muted">
+            {selectedRecipe.tempsPreparationMinutes} min · {selectedRecipe.calories} kcal · P {selectedRecipe.proteines}g · G {selectedRecipe.glucides}g · L {selectedRecipe.lipides}g
+          </p>
+          <div className="section">
+            <h4>Ingrédients</h4>
+            <ul>
+              {selectedRecipe.ingredients.map((ing) => (
+                <li key={ing}>• {ing}</li>
+              ))}
+            </ul>
+          </div>
+          <div className="section">
+            <h4>Étapes</h4>
+            <ul>
+              {selectedRecipe.etapes.map((etape, i) => (
+                <li key={i}>{i + 1}. {etape}</li>
+              ))}
+            </ul>
+          </div>
+        </Modal>
       )}
     </div>
   );

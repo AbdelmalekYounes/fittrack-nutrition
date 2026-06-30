@@ -12,17 +12,29 @@ const INTENSITY_LABELS: Record<Intensite, string> = {
   elevee: 'Élevée',
 };
 
+// Activités pour lesquelles une distance parcourue donne une estimation de calories plus fiable.
+const DISTANCE_ACTIVITIES: TypeActivite[] = ['course', 'marche', 'velo', 'natation', 'eva_esport'];
+
 function emptyForm(profilePoids: number) {
   return {
     date: todayISO(),
     typeActivite: 'musculation' as TypeActivite,
     dureeMinutes: 45,
     intensite: 'moyenne' as Intensite,
+    distanceKm: undefined as number | undefined,
     caloriesBrulees: calculateCaloriesBurned('musculation', 'moyenne', 45, profilePoids),
     notes: '',
     exercicesRealises: '',
     ressenti: '',
   };
+}
+
+// Valeurs de départ pratiques quand on change de type d'activité : 1h niveau débutant
+// pour le padel, ~3,5 km fractionnés en sprints courts pour l'EVA Esport Virtual Arena.
+function smartDefaultsFor(typeActivite: TypeActivite): Partial<{ dureeMinutes: number; intensite: Intensite; distanceKm: number }> {
+  if (typeActivite === 'padel') return { dureeMinutes: 60, intensite: 'faible' };
+  if (typeActivite === 'eva_esport') return { dureeMinutes: 40, intensite: 'elevee', distanceKm: 3.5 };
+  return {};
 }
 
 export default function Activities() {
@@ -33,13 +45,17 @@ export default function Activities() {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   function recalcCalories(next: Partial<typeof form>) {
-    const merged = { ...form, ...next };
+    let merged = { ...form, ...next };
+    if (next.typeActivite && next.typeActivite !== form.typeActivite) {
+      merged = { ...merged, distanceKm: undefined, ...smartDefaultsFor(next.typeActivite) };
+    }
     if (!caloriesEdited) {
       merged.caloriesBrulees = calculateCaloriesBurned(
         merged.typeActivite,
         merged.intensite,
         merged.dureeMinutes,
-        poids
+        poids,
+        merged.distanceKm
       );
     }
     setForm(merged);
@@ -65,6 +81,7 @@ export default function Activities() {
         .map((s) => s.trim())
         .filter(Boolean),
       ressenti: form.ressenti,
+      distanceKm: form.distanceKm,
     };
 
     if (editingId) {
@@ -83,6 +100,7 @@ export default function Activities() {
       typeActivite: activity.typeActivite,
       dureeMinutes: activity.dureeMinutes,
       intensite: activity.intensite,
+      distanceKm: activity.distanceKm,
       caloriesBrulees: activity.caloriesBrulees,
       notes: activity.notes,
       exercicesRealises: activity.exercicesRealises.join(', '),
@@ -188,6 +206,22 @@ export default function Activities() {
                 onChange={(e) => recalcCalories({ dureeMinutes: Number(e.target.value) })}
               />
             </div>
+            {DISTANCE_ACTIVITIES.includes(form.typeActivite) && (
+              <div className="form-group">
+                <label className="form-label" htmlFor="distance">Distance (km) — optionnel mais plus précis</label>
+                <input
+                  id="distance"
+                  className="form-input"
+                  type="number"
+                  step="0.1"
+                  min={0}
+                  value={form.distanceKm ?? ''}
+                  onChange={(e) =>
+                    recalcCalories({ distanceKm: e.target.value === '' ? undefined : Number(e.target.value) })
+                  }
+                />
+              </div>
+            )}
             <div className="form-group">
               <label className="form-label" htmlFor="intensite">Intensité</label>
               <select
@@ -245,7 +279,8 @@ export default function Activities() {
                   {ACTIVITY_LABELS[activity.typeActivite]} — {formatDateFr(activity.date)}
                 </span>
                 <span className="list-item__subtitle">
-                  {activity.dureeMinutes} min · {INTENSITY_LABELS[activity.intensite]} · {activity.caloriesBrulees} kcal
+                  {activity.dureeMinutes} min · {INTENSITY_LABELS[activity.intensite]}
+                  {activity.distanceKm ? ` · ${activity.distanceKm} km` : ''} · {activity.caloriesBrulees} kcal
                 </span>
               </div>
               <div className="list-item__actions">

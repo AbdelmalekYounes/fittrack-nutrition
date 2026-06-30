@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { FoodItem } from '../types';
 import foodsData from '../data/foods.json';
+import { getFoodEmoji } from '../utils/foodIcons';
 
 const foods = foodsData as FoodItem[];
 
@@ -33,7 +34,10 @@ export default function FoodPicker({ onSelect, selectedId }: FoodPickerProps) {
             className={`food-picker__item ${selectedId === food.id ? 'selected' : ''}`}
             onClick={() => onSelect(food)}
           >
-            <span>{food.nom}</span>
+            <span className="food-picker__name">
+              <span className="food-emoji" aria-hidden="true">{getFoodEmoji(food)}</span>
+              {food.nom}
+            </span>
             <span className="text-muted">{food.caloriesPour100g} kcal/100g</span>
           </div>
         ))}

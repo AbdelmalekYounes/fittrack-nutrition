@@ -5,6 +5,7 @@ import ProgressBar from '../components/ProgressBar';
 import FoodPicker from '../components/FoodPicker';
 import type { FoodItem, MealEntry, TypeRepas } from '../types';
 import { todayISO } from '../utils/date';
+import { getFoodEmoji } from '../utils/foodIcons';
 
 const MEAL_TYPE_LABELS: Record<TypeRepas, string> = {
   petit_dejeuner: 'Petit-déjeuner',
@@ -170,7 +171,9 @@ export default function Nutrition() {
               <FoodPicker selectedId={selectedFood?.id} onSelect={setSelectedFood} />
               {selectedFood && (
                 <div className="form-group" style={{ marginTop: 'var(--space-3)' }}>
-                  <label className="form-label" htmlFor="quantite">Quantité (g) — {selectedFood.nom}</label>
+                  <label className="form-label" htmlFor="quantite">
+                    Quantité (g) — <span className="food-emoji" aria-hidden="true">{getFoodEmoji(selectedFood)}</span> {selectedFood.nom}
+                  </label>
                   <input
                     id="quantite"
                     className="form-input"
@@ -254,7 +257,9 @@ export default function Nutrition() {
               {items.map((meal) => (
                 <li className="list-item" key={meal.id}>
                   <div className="list-item__main">
-                    <span className="list-item__title">{meal.nom}</span>
+                    <span className="list-item__title">
+                      <span className="food-emoji" aria-hidden="true">{getFoodEmoji({ id: '', nom: meal.nom })}</span> {meal.nom}
+                    </span>
                     <span className="list-item__subtitle">
                       {meal.quantiteGrammes} g · {meal.calories} kcal · P {meal.proteines}g · G {meal.glucides}g · L {meal.lipides}g
                     </span>
