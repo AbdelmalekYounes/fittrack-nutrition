@@ -87,3 +87,4 @@ src/
   types/        Types TypeScript partagés
   styles/       Feuilles de style CSS (variables, global, layout, components)
 ```
+
